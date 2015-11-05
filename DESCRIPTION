@@ -1,10 +1,11 @@
 Package: statTools
-Type: 
 Title: Easier statistical analyses
 Version: 1.0
 Date: 2015-11-05
 Author: Gerard Castellà Canals
 Maintainer: Gerard Castellà Canals <gcastella.91@gmail.com>
+BugReports: https://github.com/gcastella/statTools/issues
 Description: This R package contains some useful functions for performing simple statistical analyses, particularly some plots and predefined tables with results.
-License: GPL 2
+Imports: openxlsx, xtable
+License: GPL (>= 2)
 RoxygenNote: 5.0.0

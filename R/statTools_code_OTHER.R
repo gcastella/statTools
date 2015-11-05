@@ -26,6 +26,7 @@
 #' options("p.value.rounding" = list("pvalue", show.sig.stars = TRUE))
 #' }
 #' @seealso \code{\link{bivarTable}}
+#' @export
 pvalue <- function(pval, show.sig.stars = FALSE, alpha = 0.05){
   arrodonir <- function(pval, show.sig.stars, alpha){
     if(is.na(pval) | pval < 0) return("-")
@@ -74,6 +75,7 @@ pvalue <- function(pval, show.sig.stars = FALSE, alpha = 0.05){
 #' repath()
 #' # now paste where you need the adapted path. Voila!
 #' }
+#' @export
 repath <- function(writecb = TRUE) {
   path <- readClipboard()
   if(file.exists(path)){
@@ -116,6 +118,7 @@ repath <- function(writecb = TRUE) {
 #' inbra(freqs, percents, rounding = 2, add = "%")
 #' 
 #' @seealso \code{\link{bivarTable}}
+#' @export
 inbra <- function(before = NULL, ..., between = "-", add = NULL, rounding = getOption("rounding")){
   extra <- list(...)
   before2 <- before
@@ -137,6 +140,7 @@ inbra <- function(before = NULL, ..., between = "-", add = NULL, rounding = getO
   return(out)
 }
 
+#' @export
 unAsIs <- function(x) {
   if("AsIs" %in% class(x)){
     class(x) <- class(x)[-match("AsIs", class(x))]
@@ -145,6 +149,7 @@ unAsIs <- function(x) {
   return(x)
 }
 
+#' @export
 nagelkerke <- function(model, rounding = getOption("rounding")){
   if(! "glm"%in%class(model)){
     warning("it's not a glm object")
@@ -156,6 +161,7 @@ nagelkerke <- function(model, rounding = getOption("rounding")){
   return(round(num/den, rounding))
 }
 
+#' @export
 adjNagelkerke <- function(model, rounding = getOption("rounding")){
   if(! "glm"%in%class(model)){
     warning("it's not a glm object")
@@ -165,12 +171,14 @@ adjNagelkerke <- function(model, rounding = getOption("rounding")){
   return(round(1-(1-r2)*(model$df.null)/(model$df.residual), rounding))
 }
 
+#' @export
 GoF <- function(model){
   residus <- residuals(model, "pearson")
   pval.gf <- do.call(getOption("p.value.rounding")[[1]], c(list(pval = 1 - pchisq(sum(residus^2), length(residus) - length(model$coef))), getOption("p.value.rounding")[-1]))
   return(pval.gf)
 }
 
+#' @export
 getPval <- function(model, vars = 2){
   sm <- summary(model)
   pval <- sm$coef[vars, 4, drop = FALSE]
@@ -179,6 +187,7 @@ getPval <- function(model, vars = 2){
   return(out)
 }
 
+#' @export
 getBetaSd <- function(model, vars = 2){
   sm <- summary(model)
   betasd <- sm$coef[vars, 1:2, drop = FALSE]
@@ -187,6 +196,7 @@ getBetaSd <- function(model, vars = 2){
   return(out)
 }
 
+#' @export
 getORCI <- function(model, vars = 2, between = ";"){
   if("glm" %in% class(model)){
     suppressMessages(ci <- exp(confint(object = model)[vars, , drop=F]))
@@ -196,6 +206,7 @@ getORCI <- function(model, vars = 2, between = ";"){
   } else {return(rep("-", length(vars)))}
 }
 
+#' @export
 verticalgetPval <- function(model, vars = grep(pattern = "invar", x = names(model$coef)), reference = 1){
   sm <- summary(model)
   pval <- sm$coef[vars, 4, drop = FALSE]
@@ -206,6 +217,7 @@ verticalgetPval <- function(model, vars = grep(pattern = "invar", x = names(mode
   return(out)
 }
 
+#' @export
 verticalgetBetaSd <- function(model, vars = grep(pattern = "invar", x = names(model$coef)), reference = 1){
   sm <- summary(model)
   betasd <- sm$coef[vars, 1:2, drop = FALSE]
@@ -216,6 +228,7 @@ verticalgetBetaSd <- function(model, vars = grep(pattern = "invar", x = names(mo
   return(out)
 }
 
+#' @export
 verticalgetORCI <- function(model, vars = grep(pattern = "invar", x = names(model$coef)), between = ";", reference = 1){
   if("glm" %in% class(model)){
     suppressMessages(ci <- exp(confint(object = model)[vars, , drop=F]))
@@ -227,6 +240,7 @@ verticalgetORCI <- function(model, vars = grep(pattern = "invar", x = names(mode
   } else {return("-")}
 }
 
+#' @export
 checkIf <- function(data, condition, select, drop = FALSE, showNA = FALSE, ...){
   rows <- ! eval(substitute(condition), data, parent.frame())
   cols <- if(missing(select)){
@@ -246,6 +260,7 @@ checkIf <- function(data, condition, select, drop = FALSE, showNA = FALSE, ...){
   }
 }
 
+#' @export
 addNAlevel <- function(vector, toFactor = TRUE, after = length(factor(vector))){
   if(is.character(vector) | is.factor(vector)){
     vector2 <- ifelse(is.na(vector), "NA", as.character(vector))
@@ -254,6 +269,7 @@ addNAlevel <- function(vector, toFactor = TRUE, after = length(factor(vector))){
   return(vector2)
 }
 
+#' @export
 descomp <- function(x, get.all = FALSE, rev = FALSE, sum = x > 3) {
   stopifnot(x != 0)
   dividir <- 1:x
@@ -285,6 +301,7 @@ descomp <- function(x, get.all = FALSE, rev = FALSE, sum = x > 3) {
 #   glht(model, linfct = compMAT)
 # }
 
+#' @export
 survTable <- function(formula, data, when = c(1,2,5)){
   mcox <- coxph(formula = formula, data = data)
   df.km <- summary(survfit(formula, data))
@@ -308,6 +325,7 @@ survTable <- function(formula, data, when = c(1,2,5)){
   taula
 }
 
+#' @export
 toFactor <- function(data, select, levels = list(), labels = list()){
   
   nl <- as.list(seq_along(along.with = data))
@@ -321,6 +339,7 @@ toFactor <- function(data, select, levels = list(), labels = list()){
   return(data)
 }
 
+#' @export
 toNumeric <- function(data, select){
   
   nl <- as.list(seq_along(along.with = data))

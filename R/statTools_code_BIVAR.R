@@ -1,105 +1,3 @@
-# bivarTable HELP! --------------------------------------------------------------------------------------------------
-
-# CALL:          bivarTable(X, 
-#                           data = NULL,
-#                           margin = getOption("margin"),
-#                           rounding = getOption("rounding"),
-#                           test = c("both", "parametric", "non-parametric", "none"),
-#                           condense.binary.factors = getOption("condense.binary.factors"),
-#                           drop.x = getOption("drop.x"), 
-#                           drop.y = getOption("drop.y"),
-#                           fit.model = NULL,
-#                           outcome = getOption("outcome"),
-#                           FUN.model = NULL, 
-#                           ...)
-#
-# ARGUMENTS: 
-#
-# X                         F?rmula nom?s amb termes additius. Accepta AsIs class, punt (.) i restes.
-#                           La part esquerra defineix les columnes (variable amb els grups), la dreta 
-#                           les files (on veure difer?ncies entre grups).
-# data                      D'on llegir les dades per interpretar les f?rmules.
-# margin                    Valors 1 o 2. Perfils fila o columna a les taules de conting?ncia, 
-#                           respectivament. 
-# rounding                  Nombre de decimals a tenir en compte (els p-valors s'arrodoneixen amb un 
-#                           altre criteri).
-# test                      One of "both", "parametric", "non-parametric" or "none". Si volem que fagi uns 
-#                           testos predeterminats en concret (veure options()$parametric.tests i 
-#                           options()$non.parametric.tests).
-# condense.binary.factors   Si transformar en una sola l?nia les variables bin?ries.
-# drop.x                    Refactoritzar les variables fila si s?n factors per treure nivells sense observacions.            
-# drop.y                    Refactoritzar la variable columna (grups) per treure nivells sense observacions. 
-# fit.model                 Llista amb noms de les f?rmules a partir de les quals ajustar un model glm o lm
-#                           segons s'escaigui. L'?s del punt (.) s'utilitza per referir-se de forma general 
-#                           a la variable fila o columna sense haver d'especificar-ne el nom.
-# outcome                   Valors 1 o 2, segons si pels models la variable considerada outcome seran les 
-#                           que estan a les files o a les columnes, respectivament. 
-# FUN.model                 Funcions extres que s'aplicaran als models, els outputs de les quals s'afegiran 
-#                           com a noves columnes a la taula resultant. El primer par?metre de les quals 
-#                           ha de ser el model. S'especifica com una llista on cada element s'anomena com un
-#                           dels models especificats a fit.model i ser? un vector amb els noms de les funcions
-#                           (entrats com a string) a aplicar en cadascun dels respectius models. Funcions 
-#                           preparades: nagelkerke(), adjNagelkerke(), getPval(), getBetaSd(), getORCI(),
-#                           verticalgetPval(), verticalgetBetaSd(), verticalgetORCI(), GoF().
-# ...                       Arguments extres per les funcions del par?metre FUN.model. Per a especificar els
-#                           arguments extres d'una funci? que s'aplica a un model, s'afegeix dintre dels ...
-#                           un  argument amb el nom del model corresponent, i que ser? una llista on cada element
-#                           tingui per nom la funci? de la qual es volen canviar els par?metres, i contingui una 
-#                           altra llista amb els par?metres modificats (tipus el par?metre args de do.call()).
-#
-# OUTPUT:
-#
-# A list with class bivarTable, where the first argument is the table generated (a matrix) and the other arguments
-# are input arguments returned as outputs in the list, such as margin, outcome, fit.model, FUN.model, test, drop.x,
-# drop.y, condense.binary.factors, data.frame with the values from variables in the rows (named X), and the same for
-# the columns (named y), and extra arguments in ..., with maybe, the arguments for calling the functions in FUN.model.
-# 
-# The function export(bivarTable output) opens an xlsx file created as a tempfile in the computer with a fancy table
-# created via bivarTable function. ONLY WORKING WITH TEST="BOTH" RIGHT NOW (08/09/2015).
-
-# bivarTable EXAMPLES -----------------------------------------------------------------------------------------------
-
-# ##### cntrl + shift + c TO COMMENT/UNCOMMENT SELECTED CODE WITH RSTUDIO
-#
-# iris$prova <- cut(iris$Sepal.Width + iris$Sepal.Length, breaks = 2)
-# iris$prova2 <- cut(iris$Sepal.Width + iris$Sepal.Length, breaks = 3)
-# iris$prova3 <- cut(iris$Sepal.Width + iris$Sepal.Length, breaks = 5)
-# bvt <- bivarTable(X = Species ~ . + I(Sepal.Width>3) - Sepal.Length, 
-#                   data = iris, 
-#                   margin = 2, 
-#                   outcome = 1, 
-#                   drop.x = TRUE, 
-#                   drop.y = TRUE, 
-#                   test = "non-par", 
-#                   condense.binary.factors = TRUE, 
-#                   rounding = 3,
-#                   fit.model = list(simple = ~ .,
-#                                    adj = ~ . + Sepal.Length), 
-#                   FUN.model = list(simple = c("getPval"), 
-#                                    adj = c("getORCI", "getPval")),
-#                   adj = list(getPval = list(vars = 4), 
-#                              getORCI = list(vars = 4)))
-# bvt
-# bvt <- bivarTable(X = I(Sepal.Width>3) ~ . - Sepal.Length,
-#                   data = iris, 
-#                   margin = 2, 
-#                   rounding = 3,
-#                   test = "both", 
-#                   condense.binary.factors = FALSE, 
-#                   drop.x = TRUE, 
-#                   drop.y = TRUE, 
-#                   fit.model = list(simple = ~ ., 
-#                                    adj = ~ . + Sepal.Length), 
-#                   outcome = 2, 
-#                   FUN.model = list(simple = c("getPval"), 
-#                                    adj = c("verticalgetORCI", 
-#                                            "verticalgetPval")))
-# bvt
-# export(bvt)
-
-
-
-
 bivarRow <- function(x, ...) UseMethod("bivarRow", object = if(is.data.frame(x)) x[[1]] else x)
 
 bivarRow.default <- function(x, y, ...){
@@ -338,10 +236,94 @@ bivarRow.numeric <- function(x, y = NULL, data = NULL,
   return(output)
 }
 
-
-
+#' bivarTable 
+#' 
+#' Creating a table with the results of assessing differences among groups.
+#' 
+#' 
+#' @param X Fórmula només amb termes additius. Accepta AsIs class, punt (.) i restes.
+#' La part esquerra defineix les columnes (variable amb els grups), la dreta 
+#' les files (on veure diferències entre grups).
+#' @param data D'on llegir les dades per interpretar les fórmules.
+#' @param margin Valors 1 o 2. Perfils fila o columna a les taules de contingència, 
+#' respectivament. 
+#' @param rounding Nombre de decimals a tenir en compte (els p-valors s'arrodoneixen amb un 
+#' altre criteri).
+#' @param test One of "both", "parametric", "non-parametric" or "none". Si volem que fagi uns 
+#' testos predeterminats en concret (veure options()$parametric.tests i 
+#' options()$non.parametric.tests).
+#' @param condense.binary.factors Si transformar en una sola línia les variables binàries.
+#' @param drop.x Refactoritzar les variables fila si són factors per treure nivells sense observacions.            
+#' @param drop.y Refactoritzar la variable columna (grups) per treure nivells sense observacions. 
+#' @param fit.model Llista amb noms de les fórmules a partir de les quals ajustar un model glm o lm
+#' segons s'escaigui. L'ús del punt (.) s'utilitza per referir-se de forma general 
+#' a la variable fila o columna sense haver d'especificar-ne el nom (veure update.formula).
+#' @param outcome Valors 1 o 2, segons si pels models la variable considerada outcome seran les 
+#' que estan a les files o a les columnes, respectivament. 
+#' @param FUN.model Funcions extres que s'aplicaran als models, els outputs de les quals s'afegiran 
+#' com a noves columnes a la taula resultant. El primer paràmetre de les quals 
+#' ha de ser el model. S'especifica com una llista on cada element s'anomena com un
+#' dels models especificats a fit.model i serà un vector amb els noms de les funcions
+#' (entrats com a string) a aplicar en cadascun dels respectius models. Funcions 
+#' preparades: nagelkerke(), adjNagelkerke(), getPval(), getBetaSd(), getORCI(),
+#' verticalgetPval(), verticalgetBetaSd(), verticalgetORCI(), GoF().
+#' @param ... Arguments extres per les funcions del paràmetre FUN.model. Per a especificar els
+#' arguments extres d'una funció que s'aplica a un model, s'afegeix dintre dels ...
+#' un  argument amb el nom del model corresponent, i que serà una llista on cada element
+#' tingui per nom la funció de la qual es volen canviar els paràmetres, i contingui una 
+#' altra llista amb els paràmetres modificats (tipus el paràmetre args de do.call()).
+#'
+#' @return 
+#' A list with class bivarTable, where the first argument is the table generated (a matrix) and the other arguments
+#' are input arguments returned as outputs in the list, such as margin, outcome, fit.model, FUN.model, test, drop.x,
+#' drop.y, condense.binary.factors, data.frame with the values from variables in the rows (named X), and the same for
+#' the columns (named y), and extra arguments in ..., with maybe, the arguments for calling the functions in FUN.model.
+#' 
+#' @examples
+#' iris$prova <- cut(iris$Sepal.Width + iris$Sepal.Length, breaks = 2)
+#' iris$prova2 <- cut(iris$Sepal.Width + iris$Sepal.Length, breaks = 3)
+#' iris$prova3 <- cut(iris$Sepal.Width + iris$Sepal.Length, breaks = 5)
+#' bvt <- bivarTable(X = Species ~ . + I(Sepal.Width>3) - Sepal.Length, 
+#'                   data = iris, 
+#'                   margin = 2, 
+#'                   outcome = 1, 
+#'                   drop.x = TRUE, 
+#'                   drop.y = TRUE, 
+#'                   test = "non-par", 
+#'                   condense.binary.factors = TRUE, 
+#'                   rounding = 3,
+#'                   fit.model = list(simple = ~ .,
+#'                                    adj = ~ . + Sepal.Length), 
+#'                   FUN.model = list(simple = c("getPval"), 
+#'                                    adj = c("getORCI", "getPval")),
+#'                   adj = list(getPval = list(vars = 4), 
+#'                              getORCI = list(vars = 4)))
+#' bvt
+#' bvt <- bivarTable(X = I(Sepal.Width>3) ~ . - Sepal.Length,
+#'                   data = iris, 
+#'                   margin = 2, 
+#'                   rounding = 3,
+#'                   test = "both", 
+#'                   condense.binary.factors = FALSE, 
+#'                   drop.x = TRUE, 
+#'                   drop.y = TRUE, 
+#'                   fit.model = list(simple = ~ ., 
+#'                                    adj = ~ . + Sepal.Length), 
+#'                   outcome = 2, 
+#'                   FUN.model = list(simple = c("getPval"), 
+#'                                    adj = c("verticalgetORCI", 
+#'                                            "verticalgetPval")))
+#' bvt
+#' \dontrun{
+#' export(bvt)
+#' }
+#' 
+#' @seealso \code{\link{export}}
+#' @export
 bivarTable <- function(X, ...) UseMethod("bivarTable")
 
+#' @export
+#' @describeIn bivarTable Calling separately a data frame with the variables in the rows and the grouping variable.
 bivarTable.default <- function(X, 
                                y = NULL, 
                                data = NULL,
@@ -399,6 +381,9 @@ bivarTable.default <- function(X,
   return(out)
 }
 
+
+#' @export
+#' @describeIn bivarTable Calling bivarTable using a formula.
 bivarTable.formula <- function(X, 
                                data = NULL,
                                margin = getOption("margin"),
@@ -439,16 +424,40 @@ bivarTable.formula <- function(X,
 }
 
 
-
-print.bivarTable <- function(X){
+#' @export
+print.bivarTable <- function(X, ...){
   outX <- X$table
-  print.default(outX, quote = FALSE)
+  print.default(outX, quote = FALSE, ...)
 }
 
 
-
+#' Export a matrix to tex, csv or xlsx
+#' 
+#' Better visualisation of a matrix, or saving it in a file.
+#' 
+#' @param X Object to be exported (matrix or bivarTable object).
+#' @param cols Names for the columns
+#' @param rows Names for the rows
+#' @param type Type of file to export to (extension without the dot).
+#' @param file Name of the file. By default a temp file is created.
+#' @param caption Caption passed to xtable in case of exporting to tex.
+#' @param label Label when exporting to tex.
+#' @param append Append or not in case of csv.
+#' @param ... Further arguments passed to print.xtable
+#' 
+#' @details
+#' When exporting to xlsx, the produced file is opened. Make sure openxlsx is working ok on your computer (Rtools and PATH issues).
+#' 
+#' @return Returns the argument X but invisible.
+#' 
+#' @seealso \code{\link{bivarTable}}
+#' @export
 export <- function(X, ...) UseMethod("export")
 
+#' @export
+#' @import xtable
+#' @import openxlsx
+#' @describeIn export Default method for export.
 export.default <- function(X, 
                    cols = colnames(X), 
                    rows = rownames(X), 
@@ -483,6 +492,9 @@ export.default <- function(X,
   return(invisible(X))
 }
 
+#' @export
+#' @import openxlsx
+#' @describeIn export For exporting a bivarTable object, with fancier style if type is xlsx.
 export.bivarTable <- function(X, 
                               type = "xlsx",
                               file = tempfile(pattern = "exportBivarTable", fileext = paste0(".", type)), 
@@ -504,7 +516,6 @@ export.bivarTable <- function(X,
   } else if(type == "tex") {
     export.default(taula, file = file, ...)
   } else if(type == "xlsx"){
-    require(openxlsx)
     
     wb <- createWorkbook()
     modifyBaseFont(wb, fontSize = 8)

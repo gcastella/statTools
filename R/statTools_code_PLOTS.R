@@ -1,3 +1,4 @@
+#' @export
 image2 <- function(x, y = NULL, z = NULL,...){
   if(is.null(z)){
     x <- t(x)[, nrow(x):1]
@@ -8,6 +9,7 @@ image2 <- function(x, y = NULL, z = NULL,...){
   }
 }
 
+#' @export
 contour2 <- function(x, y = NULL, z = NULL, ...){
   if(is.null(z)){
     x <- t(x)[, nrow(x):1]
@@ -18,6 +20,7 @@ contour2 <- function(x, y = NULL, z = NULL, ...){
   }
 }
 
+#' @export
 BARplot <- function(formula, data = NULL, factor.sd = 1, margin = 1, beside = TRUE, freq = FALSE, mean.par = NULL, sd.par = NULL, xlab = NULL, ylab = NULL, ...){
   df <- model.frame(formula, data)
   x <- df[, 1]
@@ -41,6 +44,7 @@ BARplot <- function(formula, data = NULL, factor.sd = 1, margin = 1, beside = TR
   return(invisible(list(mean = mean.bars, sd = sd.arrows, barplot = a)))
 }
 
+#' @export
 ORplot <- function(formula, data, model.args = NULL, print.pvals = T, xlab = NULL, cex = 3, pch = 18, ylim = NULL, ...){
   m <- do.call(glm, c(list(formula = formula, data = data, family = binomial), model.args))
   if(is.null(xlab)) xlab <- names(m$x)[1]
@@ -59,6 +63,7 @@ ORplot <- function(formula, data, model.args = NULL, print.pvals = T, xlab = NUL
   return(invisible(list(model = m, OR = OR, ci = ci, p.value = pvals)))
 }
 
+#' @export
 HRplot <- function(formula, data, legend = TRUE, args.legend = list(x = "bottomleft", bty = "n", lty = c(1, 1)), test = TRUE, args.test = list(x = "bottomright", bty = "n"), col, ...){
   
   llcovar <- 1

@@ -278,7 +278,7 @@ descomp <- function(x, get.all = FALSE, rev = FALSE, sum = x > 3) {
   mindif <- factors[which.min(abs(factors - rev(factors)))]
   if(mindif == 1 & sum){
     message("descomp(", x, ") was 1 and ", x, ", so calculating descomp(", x + 1, ").")
-    return(descomp(x + 1))
+    return(descomp(x + 1, sum = sum, rev = rev))
   }
   out <- c(mindif, x/mindif)
   if(rev) out <- rev(out)

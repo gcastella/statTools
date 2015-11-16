@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<!-- saved from url=(0110)file:///C:/Users/Usuari/AppData/Local/Temp/Rtmp0yASNs/preview-6bc601f4bdb.dir/bivarTable_Comparing_Groups.html -->
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta charset="utf-8">
+
+<meta name="generator" content="pandoc">
+
+<meta name="author" content="Gerard Castellà Canals">
+
+<meta name="date" content="2015-11-16">
+
+<title>Comparing groups with bivarTable</title>
+
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; }
+code > span.dt { color: #902000; }
+code > span.dv { color: #40a070; }
+code > span.bn { color: #40a070; }
+code > span.fl { color: #40a070; }
+code > span.ch { color: #4070a0; }
+code > span.st { color: #4070a0; }
+code > span.co { color: #60a0b0; font-style: italic; }
+code > span.ot { color: #007020; }
+code > span.al { color: #ff0000; font-weight: bold; }
+code > span.fu { color: #06287e; }
+code > span.er { color: #ff0000; font-weight: bold; }
+</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+
+
+<link href="data:text/css,body%20%7B%0A%20%20background%2Dcolor%3A%20%23fff%3B%0A%20%20margin%3A%201em%20auto%3B%0A%20%20max%2Dwidth%3A%20700px%3B%0A%20%20overflow%3A%20visible%3B%0A%20%20padding%2Dleft%3A%202em%3B%0A%20%20padding%2Dright%3A%202em%3B%0A%20%20font%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0A%20%20font%2Dsize%3A%2014px%3B%0A%20%20line%2Dheight%3A%201%2E35%3B%0A%7D%0A%0A%23header%20%7B%0A%20%20text%2Dalign%3A%20center%3B%0A%7D%0A%0A%23TOC%20%7B%0A%20%20clear%3A%20both%3B%0A%20%20margin%3A%200%200%2010px%2010px%3B%0A%20%20padding%3A%204px%3B%0A%20%20width%3A%20400px%3B%0A%20%20border%3A%201px%20solid%20%23CCCCCC%3B%0A%20%20border%2Dradius%3A%205px%3B%0A%0A%20%20background%2Dcolor%3A%20%23f6f6f6%3B%0A%20%20font%2Dsize%3A%2013px%3B%0A%20%20line%2Dheight%3A%201%2E3%3B%0A%7D%0A%20%20%23TOC%20%2Etoctitle%20%7B%0A%20%20%20%20font%2Dweight%3A%20bold%3B%0A%20%20%20%20font%2Dsize%3A%2015px%3B%0A%20%20%20%20margin%2Dleft%3A%205px%3B%0A%20%20%7D%0A%0A%20%20%23TOC%20ul%20%7B%0A%20%20%20%20padding%2Dleft%3A%2040px%3B%0A%20%20%20%20margin%2Dleft%3A%20%2D1%2E5em%3B%0A%20%20%20%20margin%2Dtop%3A%205px%3B%0A%20%20%20%20margin%2Dbottom%3A%205px%3B%0A%20%20%7D%0A%20%20%23TOC%20ul%20ul%20%7B%0A%20%20%20%20margin%2Dleft%3A%20%2D2em%3B%0A%20%20%7D%0A%20%20%23TOC%20li%20%7B%0A%20%20%20%20line%2Dheight%3A%2016px%3B%0A%20%20%7D%0A%0Atable%20%7B%0A%20%20margin%3A%201em%20auto%3B%0A%20%20border%2Dwidth%3A%201px%3B%0A%20%20border%2Dcolor%3A%20%23DDDDDD%3B%0A%20%20border%2Dstyle%3A%20outset%3B%0A%20%20border%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0A%20%20border%2Dwidth%3A%202px%3B%0A%20%20padding%3A%205px%3B%0A%20%20border%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0A%20%20border%2Dwidth%3A%201px%3B%0A%20%20border%2Dstyle%3A%20inset%3B%0A%20%20line%2Dheight%3A%2018px%3B%0A%20%20padding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0A%20%20border%2Dleft%2Dstyle%3A%20none%3B%0A%20%20border%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0A%20%20background%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0A%0Ap%20%7B%0A%20%20margin%3A%200%2E5em%200%3B%0A%7D%0A%0Ablockquote%20%7B%0A%20%20background%2Dcolor%3A%20%23f6f6f6%3B%0A%20%20padding%3A%200%2E25em%200%2E75em%3B%0A%7D%0A%0Ahr%20%7B%0A%20%20border%2Dstyle%3A%20solid%3B%0A%20%20border%3A%20none%3B%0A%20%20border%2Dtop%3A%201px%20solid%20%23777%3B%0A%20%20margin%3A%2028px%200%3B%0A%7D%0A%0Adl%20%7B%0A%20%20margin%2Dleft%3A%200%3B%0A%7D%0A%20%20dl%20dd%20%7B%0A%20%20%20%20margin%2Dbottom%3A%2013px%3B%0A%20%20%20%20margin%2Dleft%3A%2013px%3B%0A%20%20%7D%0A%20%20dl%20dt%20%7B%0A%20%20%20%20font%2Dweight%3A%20bold%3B%0A%20%20%7D%0A%0Aul%20%7B%0A%20%20margin%2Dtop%3A%200%3B%0A%7D%0A%20%20ul%20li%20%7B%0A%20%20%20%20list%2Dstyle%3A%20circle%20outside%3B%0A%20%20%7D%0A%20%20ul%20ul%20%7B%0A%20%20%20%20margin%2Dbottom%3A%200%3B%0A%20%20%7D%0A%0Apre%2C%20code%20%7B%0A%20%20background%2Dcolor%3A%20%23f7f7f7%3B%0A%20%20border%2Dradius%3A%203px%3B%0A%20%20color%3A%20%23333%3B%0A%7D%0Apre%20%7B%0A%20%20white%2Dspace%3A%20pre%2Dwrap%3B%20%20%20%20%2F%2A%20Wrap%20long%20lines%20%2A%2F%0A%20%20border%2Dradius%3A%203px%3B%0A%20%20margin%3A%205px%200px%2010px%200px%3B%0A%20%20padding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0A%20%20background%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0A%0Acode%20%7B%0A%20%20font%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0A%20%20font%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0A%20%20padding%3A%202px%200px%3B%0A%7D%0A%0Adiv%2Efigure%20%7B%0A%20%20text%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0A%20%20background%2Dcolor%3A%20%23FFFFFF%3B%0A%20%20padding%3A%202px%3B%0A%20%20border%3A%201px%20solid%20%23DDDDDD%3B%0A%20%20border%2Dradius%3A%203px%3B%0A%20%20border%3A%201px%20solid%20%23CCCCCC%3B%0A%20%20margin%3A%200%205px%3B%0A%7D%0A%0Ah1%20%7B%0A%20%20margin%2Dtop%3A%200%3B%0A%20%20font%2Dsize%3A%2035px%3B%0A%20%20line%2Dheight%3A%2040px%3B%0A%7D%0A%0Ah2%20%7B%0A%20%20border%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0A%20%20padding%2Dtop%3A%2010px%3B%0A%20%20padding%2Dbottom%3A%202px%3B%0A%20%20font%2Dsize%3A%20145%25%3B%0A%7D%0A%0Ah3%20%7B%0A%20%20border%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0A%20%20padding%2Dtop%3A%2010px%3B%0A%20%20font%2Dsize%3A%20120%25%3B%0A%7D%0A%0Ah4%20%7B%0A%20%20border%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0A%20%20margin%2Dleft%3A%208px%3B%0A%20%20font%2Dsize%3A%20105%25%3B%0A%7D%0A%0Ah5%2C%20h6%20%7B%0A%20%20border%2Dbottom%3A%201px%20solid%20%23ccc%3B%0A%20%20font%2Dsize%3A%20105%25%3B%0A%7D%0A%0Aa%20%7B%0A%20%20color%3A%20%230033dd%3B%0A%20%20text%2Ddecoration%3A%20none%3B%0A%7D%0A%20%20a%3Ahover%20%7B%0A%20%20%20%20color%3A%20%236666ff%3B%20%7D%0A%20%20a%3Avisited%20%7B%0A%20%20%20%20color%3A%20%23800080%3B%20%7D%0A%20%20a%3Avisited%3Ahover%20%7B%0A%20%20%20%20color%3A%20%23BB00BB%3B%20%7D%0A%20%20a%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0A%20%20%20%20text%2Ddecoration%3A%20underline%3B%20%7D%0A%20%20a%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0A%20%20%20%20text%2Ddecoration%3A%20underline%3B%20%7D%0A%0A%2F%2A%20Class%20described%20in%20https%3A%2F%2Fbenjeffrey%2Ecom%2Fposts%2Fpandoc%2Dsyntax%2Dhighlighting%2Dcss%0A%20%20%20Colours%20from%20https%3A%2F%2Fgist%2Egithub%2Ecom%2Frobsimmons%2F1172277%20%2A%2F%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%2F%2A%20Keyword%20%2A%2F%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%2F%2A%20DataType%20%2A%2F%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%2F%2A%20DecVal%20%28decimal%20values%29%20%2A%2F%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%2F%2A%20BaseN%20%2A%2F%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%2F%2A%20Float%20%2A%2F%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%2F%2A%20Char%20%2A%2F%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%2F%2A%20String%20%2A%2F%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%2F%2A%20Comment%20%2A%2F%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%2F%2A%20OtherToken%20%2A%2F%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%2F%2A%20AlertToken%20%2A%2F%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%2F%2A%20Function%20calls%20%2A%2F%20%0Acode%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%2F%2A%20ErrorTok%20%2A%2F%0A%0A" rel="stylesheet" type="text/css">
+
+<script type="text/javascript" src="./Comparing groups with bivarTable_files/MathJax.js"></script><style type="text/css">.MathJax_Hover_Frame {border-radius: .25em; -webkit-border-radius: .25em; -moz-border-radius: .25em; -khtml-border-radius: .25em; box-shadow: 0px 0px 15px #83A; -webkit-box-shadow: 0px 0px 15px #83A; -moz-box-shadow: 0px 0px 15px #83A; -khtml-box-shadow: 0px 0px 15px #83A; border: 1px solid #A6D ! important; display: inline-block; position: absolute}
+.MathJax_Hover_Arrow {position: absolute; width: 15px; height: 11px; cursor: pointer}
+</style><style type="text/css">#MathJax_About {position: fixed; left: 50%; width: auto; text-align: center; border: 3px outset; padding: 1em 2em; background-color: #DDDDDD; color: black; cursor: default; font-family: message-box; font-size: 120%; font-style: normal; text-indent: 0; text-transform: none; line-height: normal; letter-spacing: normal; word-spacing: normal; word-wrap: normal; white-space: nowrap; float: none; z-index: 201; border-radius: 15px; -webkit-border-radius: 15px; -moz-border-radius: 15px; -khtml-border-radius: 15px; box-shadow: 0px 10px 20px #808080; -webkit-box-shadow: 0px 10px 20px #808080; -moz-box-shadow: 0px 10px 20px #808080; -khtml-box-shadow: 0px 10px 20px #808080; filter: progid:DXImageTransform.Microsoft.dropshadow(OffX=2, OffY=2, Color='gray', Positive='true')}
+.MathJax_Menu {position: absolute; background-color: white; color: black; width: auto; padding: 2px; border: 1px solid #CCCCCC; margin: 0; cursor: default; font: menu; text-align: left; text-indent: 0; text-transform: none; line-height: normal; letter-spacing: normal; word-spacing: normal; word-wrap: normal; white-space: nowrap; float: none; z-index: 201; box-shadow: 0px 10px 20px #808080; -webkit-box-shadow: 0px 10px 20px #808080; -moz-box-shadow: 0px 10px 20px #808080; -khtml-box-shadow: 0px 10px 20px #808080; filter: progid:DXImageTransform.Microsoft.dropshadow(OffX=2, OffY=2, Color='gray', Positive='true')}
+.MathJax_MenuItem {padding: 2px 2em; background: transparent}
+.MathJax_MenuArrow {position: absolute; right: .5em; color: #666666}
+.MathJax_MenuActive .MathJax_MenuArrow {color: white}
+.MathJax_MenuArrow.RTL {left: .5em; right: auto}
+.MathJax_MenuCheck {position: absolute; left: .7em}
+.MathJax_MenuCheck.RTL {right: .7em; left: auto}
+.MathJax_MenuRadioCheck {position: absolute; left: 1em}
+.MathJax_MenuRadioCheck.RTL {right: 1em; left: auto}
+.MathJax_MenuLabel {padding: 2px 2em 4px 1.33em; font-style: italic}
+.MathJax_MenuRule {border-top: 1px solid #CCCCCC; margin: 4px 1px 0px}
+.MathJax_MenuDisabled {color: GrayText}
+.MathJax_MenuActive {background-color: Highlight; color: HighlightText}
+.MathJax_Menu_Close {position: absolute; width: 31px; height: 31px; top: -15px; left: -15px}
+</style><style type="text/css">.MathJax_Preview .MJXc-math {color: inherit!important}
+</style><style type="text/css">#MathJax_Zoom {position: absolute; background-color: #F0F0F0; overflow: auto; display: block; z-index: 301; padding: .5em; border: 1px solid black; margin: 0; font-weight: normal; font-style: normal; text-align: left; text-indent: 0; text-transform: none; line-height: normal; letter-spacing: normal; word-spacing: normal; word-wrap: normal; white-space: nowrap; float: none; box-shadow: 5px 5px 15px #AAAAAA; -webkit-box-shadow: 5px 5px 15px #AAAAAA; -moz-box-shadow: 5px 5px 15px #AAAAAA; -khtml-box-shadow: 5px 5px 15px #AAAAAA; filter: progid:DXImageTransform.Microsoft.dropshadow(OffX=2, OffY=2, Color='gray', Positive='true')}
+#MathJax_ZoomOverlay {position: absolute; left: 0; top: 0; z-index: 300; display: inline-block; width: 100%; height: 100%; border: 0; padding: 0; margin: 0; background-color: white; opacity: 0; filter: alpha(opacity=0)}
+#MathJax_ZoomFrame {position: relative; display: inline-block; height: 0; width: 0}
+#MathJax_ZoomEventTrap {position: absolute; left: 0; top: 0; z-index: 302; display: inline-block; border: 0; padding: 0; margin: 0; background-color: white; opacity: 0; filter: alpha(opacity=0)}
+</style><style type="text/css">.MathJax_Preview {color: #888}
+#MathJax_Message {position: fixed; left: 1em; bottom: 1.5em; background-color: #E6E6E6; border: 1px solid #959595; margin: 0px; padding: 2px 8px; z-index: 102; color: black; font-size: 80%; width: auto; white-space: nowrap}
+#MathJax_MSIE_Frame {position: absolute; top: 0; left: 0; width: 0px; z-index: 101; border: 0px; margin: 0px; padding: 0px}
+.MathJax_Error {color: #CC0000; font-style: italic}
+</style><style type="text/css">.MJXc-script {font-size: .8em}
+.MJXc-right {-webkit-transform-origin: right; -moz-transform-origin: right; -ms-transform-origin: right; -o-transform-origin: right; transform-origin: right}
+.MJXc-bold {font-weight: bold}
+.MJXc-italic {font-style: italic}
+.MJXc-scr {font-family: MathJax_Script,'Times New Roman',Times,STIXGeneral,serif}
+.MJXc-frak {font-family: MathJax_Fraktur,'Times New Roman',Times,STIXGeneral,serif}
+.MJXc-sf {font-family: MathJax_SansSerif,'Times New Roman',Times,STIXGeneral,serif}
+.MJXc-cal {font-family: MathJax_Caligraphic,'Times New Roman',Times,STIXGeneral,serif}
+.MJXc-mono {font-family: MathJax_Typewriter,'Times New Roman',Times,STIXGeneral,serif}
+.MJXc-largeop {font-size: 150%}
+.MJXc-largeop.MJXc-int {vertical-align: -.2em}
+.MJXc-math {display: inline-block; line-height: 1.2; text-indent: 0; font-family: 'Times New Roman',Times,STIXGeneral,serif; white-space: nowrap; border-collapse: collapse}
+.MJXc-display {display: block; text-align: center; margin: 1em 0}
+.MJXc-math span {display: inline-block}
+.MJXc-box {display: block!important; text-align: center}
+.MJXc-box:after {content: " "}
+.MJXc-rule {display: block!important; margin-top: .1em}
+.MJXc-char {display: block!important}
+.MJXc-mo {margin: 0 .15em}
+.MJXc-mfrac {margin: 0 .125em; vertical-align: .25em}
+.MJXc-denom {display: inline-table!important; width: 100%}
+.MJXc-denom > * {display: table-row!important}
+.MJXc-surd {vertical-align: top}
+.MJXc-surd > * {display: block!important}
+.MJXc-script-box > *  {display: table!important; height: 50%}
+.MJXc-script-box > * > * {display: table-cell!important; vertical-align: top}
+.MJXc-script-box > *:last-child > * {vertical-align: bottom}
+.MJXc-script-box > * > * > * {display: block!important}
+.MJXc-mphantom {visibility: hidden}
+.MJXc-munderover {display: inline-table!important}
+.MJXc-over {display: inline-block!important; text-align: center}
+.MJXc-over > * {display: block!important}
+.MJXc-munderover > * {display: table-row!important}
+.MJXc-mtable {vertical-align: .25em; margin: 0 .125em}
+.MJXc-mtable > * {display: inline-table!important; vertical-align: middle}
+.MJXc-mtr {display: table-row!important}
+.MJXc-mtd {display: table-cell!important; text-align: center; padding: .5em 0 0 .5em}
+.MJXc-mtr > .MJXc-mtd:first-child {padding-left: 0}
+.MJXc-mtr:first-child > .MJXc-mtd {padding-top: 0}
+.MJXc-mlabeledtr {display: table-row!important}
+.MJXc-mlabeledtr > .MJXc-mtd:first-child {padding-left: 0}
+.MJXc-mlabeledtr:first-child > .MJXc-mtd {padding-top: 0}
+.MJXc-merror {background-color: #FFFF88; color: #CC0000; border: 1px solid #CC0000; padding: 1px 3px; font-style: normal; font-size: 90%}
+.MJXc-scale0 {-webkit-transform: scaleX(.0); -moz-transform: scaleX(.0); -ms-transform: scaleX(.0); -o-transform: scaleX(.0); transform: scaleX(.0)}
+.MJXc-scale1 {-webkit-transform: scaleX(.1); -moz-transform: scaleX(.1); -ms-transform: scaleX(.1); -o-transform: scaleX(.1); transform: scaleX(.1)}
+.MJXc-scale2 {-webkit-transform: scaleX(.2); -moz-transform: scaleX(.2); -ms-transform: scaleX(.2); -o-transform: scaleX(.2); transform: scaleX(.2)}
+.MJXc-scale3 {-webkit-transform: scaleX(.3); -moz-transform: scaleX(.3); -ms-transform: scaleX(.3); -o-transform: scaleX(.3); transform: scaleX(.3)}
+.MJXc-scale4 {-webkit-transform: scaleX(.4); -moz-transform: scaleX(.4); -ms-transform: scaleX(.4); -o-transform: scaleX(.4); transform: scaleX(.4)}
+.MJXc-scale5 {-webkit-transform: scaleX(.5); -moz-transform: scaleX(.5); -ms-transform: scaleX(.5); -o-transform: scaleX(.5); transform: scaleX(.5)}
+.MJXc-scale6 {-webkit-transform: scaleX(.6); -moz-transform: scaleX(.6); -ms-transform: scaleX(.6); -o-transform: scaleX(.6); transform: scaleX(.6)}
+.MJXc-scale7 {-webkit-transform: scaleX(.7); -moz-transform: scaleX(.7); -ms-transform: scaleX(.7); -o-transform: scaleX(.7); transform: scaleX(.7)}
+.MJXc-scale8 {-webkit-transform: scaleX(.8); -moz-transform: scaleX(.8); -ms-transform: scaleX(.8); -o-transform: scaleX(.8); transform: scaleX(.8)}
+.MJXc-scale9 {-webkit-transform: scaleX(.9); -moz-transform: scaleX(.9); -ms-transform: scaleX(.9); -o-transform: scaleX(.9); transform: scaleX(.9)}
+.MathJax_CHTML .noError {vertical-align: ; font-size: 90%; text-align: left; color: black; padding: 1px 3px; border: 1px solid}
+</style></head>
+
+<body><div id="MathJax_Message" style="display: none;"></div>
+
+
+
+<div id="header">
+<h1 class="title">Comparing groups with bivarTable</h1>
+<h4 class="author"><em>Gerard Castellà Canals</em></h4>
+<h4 class="date"><em>2015-11-16</em></h4>
+</div>
+
+
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(knitr)
+<span class="kw">library</span>(statTools)
+opts_chunk$<span class="kw">set</span>(<span class="dt">collapse =</span> T, <span class="dt">comment =</span> <span class="st">"#&gt;"</span>, <span class="dt">eval =</span> <span class="ot">FALSE</span>)</code></pre>
+<p>When performing a statistical analysis most of the times differences between two or more groups need to be assessed. <code>bivarTable</code> function is thought to address this issue constructing a table with the results from the comparison. It is particularly useful when searching for confounding variables or simply assessing differences in the outcomes, adjusting to avoid confusion.</p>
+<p>The aim is to provide a useful function in R to allow statisticians to perform this kind of analyses quicker and easier, saving a lot of time. However, <code>bivarTable</code> is very flexible and can assess different hypothesis at a time, allowing different arguments to customize the tables.</p>
+<p>The package statTools also includes an <code>export</code> method, that exports the created tables to latex (via xtable), xlsx (via openxlsx) or csv.</p>
+<div id="the-structure" class="section level2">
+<h2>The structure</h2>
+<p><code>bivarTable</code> constructs a matrix with the results of comparing variables by groups. The levels of the grouping variable will be displayed in columns, and in the rows all the variables in which the differences will be assessed. An extra column called <code>Total</code> will be always displayed, with the overall description of the sample. All this structure is summarized with a formula (argument <code>X</code>), where the LHS indicates the variable displayed in the columns (i.e.&nbsp;grouping variable) and the RHS all the variables in the rows. To sum up:</p>
+<p><code>Grouping Variable ~ Variable 1 + Variable 2 + ... + Variable n</code></p>
+<p>or equivalently,</p>
+<p><code>Columns ~ Row 1 + Row 2 + ... + Row n</code></p>
+<p>Notice that ONLY one term is allowed in the LHS and interaction terms are not handled (only additive terms). In addition, since the names of the terms of the formula are assumed to be columns in the argument <code>data</code>, the dot <code>.</code> can be used to add all other variables in the data not mentioned in the formula. You can make use also of the <code>-</code>operator to remove terms from the formula. When LHS is not provided, only a table with the overall description is produced. The following code, depicts the structure explained, using the iris dataset as example.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">bivarTable</span>(Species ~<span class="st"> </span>., iris)</code></pre>
+<p>An unquoted matrix is printed (internally returns a list where the first argument is the table printed), with the totals and the levels of <code>Species</code> (LHS) as columns and all the remaining variables in <code>iris</code> as rows. Notice also that:</p>
+<ul>
+<li>N’s in every group are provided, and percentage as well in the row names.</li>
+<li>The percentage in the overall column indicates that 100% of the values of grouping variable are non-missing.</li>
+<li>Each cell has the mean (SD) or absolute frequency (relative frequency * 100) for quantitative and qualitative variables, respectively.</li>
+<li>For the qualitative variables, each percentage is calculated from the total in the column.</li>
+<li>There’s an argument which was not explained yet. Pattience, we will get there soon.</li>
+</ul>
+<p>This is one of the most basic tables that can be generated with <code>bivartable</code>. Other arguments than can control the output produced by default:</p>
+<ul>
+<li>To change the percentages for qualitative variables (rows to sum 100% instead of columns) use <code>margin = 1</code> instead of the default <code>margin = 2</code>. It is passed to <code>prop.table</code></li>
+<li>To display more decimal places, use <code>rounding</code>. By default only two decimals are printed: <code>rounding = 2</code>. This argument reads in fact the element <code>rounding</code> from options.</li>
+<li>By default, binary factors in the rows are displayed as one row (usually the second, except the first one has level “Yes”, “1”, or something similar) and giving the label of the row displayed in brackets. Set the argument <code>condense.binary.factors</code> to <code>FALSE</code> to display both levels (rows).</li>
+<li>By default, the grouping variable is transformed to factor using <code>factor</code> function. This removes unused categories. To change that, use <code>drop.y = FALSE</code>.</li>
+<li>The same is done for the rows when are factors. To change that set <code>drop.x</code> to <code>FALSE</code>. These agruments can change the number of rows and columns and must be used carefully because they can lead (and avoid) to errors.</li>
+</ul>
+<p>Most of these arguments can be set by default throughout all the session via <code>options(argument = &lt;value&gt;)</code>. We will add some qualitative variables to the <code>iris</code> dataset to better illustrate the effect of some of these arguments:</p>
+<pre class="sourceCode r"><code class="sourceCode r">iris2 &lt;-<span class="st"> </span>iris
+iris2$Sepal.Total.CAT2 &lt;-<span class="st"> </span><span class="kw">cut</span>(iris$Sepal.Width +<span class="st"> </span>iris$Sepal.Length, <span class="dt">breaks =</span> <span class="dv">2</span>)
+iris2$Sepal.Total.CAT3 &lt;-<span class="st"> </span><span class="kw">cut</span>(iris$Sepal.Width +<span class="st"> </span>iris$Sepal.Length, <span class="dt">breaks =</span> <span class="dv">3</span>)
+iris2$Sepal.Total.CAT5 &lt;-<span class="st"> </span><span class="kw">cut</span>(iris$Sepal.Width +<span class="st"> </span>iris$Sepal.Length, <span class="dt">breaks =</span> <span class="dv">5</span>)
+
+<span class="kw">bivarTable</span>(Species ~<span class="st"> </span>. +<span class="st"> </span><span class="kw">log</span>(Sepal.Length), iris2, 
+           <span class="dt">rounding =</span> <span class="dv">3</span>, <span class="dt">margin =</span> <span class="dv">2</span>, <span class="dt">condense.binary.factors =</span> <span class="ot">TRUE</span>)
+<span class="kw">bivarTable</span>(Species ~<span class="st"> </span>. +<span class="st"> </span><span class="kw">log</span>(Sepal.Length), iris2, <span class="dt">margin =</span> <span class="dv">1</span>, <span class="dt">condense.binary.factors =</span> <span class="ot">FALSE</span>)</code></pre>
+<p>Notice that the formula allows transformations of the variables like logarithm in this case.</p>
+</div>
+<div id="assessing-differences" class="section level2">
+<h2>Assessing differences</h2>
+<p>Once the basic structure of the table is set, extra columns can be added with the p-values resulting from tests assessing differences between groups in each of the row variables. Argument <code>test</code> controls this issue. By default, <code>test = "none"</code>, no tests are performed. However, there are other options for this argument: <code>"parametric"</code>, <code>"non-parametric"</code> and <code>"both"</code>. These options will perform the tests specified in the elements <code>"parametric.tests"</code> and <code>"non.parametric.tests"</code> from options. One parametric test and one non-parametric test are defined for every possible scenario respectively.</p>
+<ul>
+<li>Quantitative row variable vs binary grouping variable: t-test (<code>t.test</code>) or Mann-Whitney test (<code>wilcox.test</code>).</li>
+<li>Quantitative row variable vs non-binary grouping variable: ANOVA (<code>oneway.test</code>) or Kruskal-Wallis test (<code>kruskal.test</code>).</li>
+<li>Qualitative row variable: Chi-squared test (<code>chisq.test</code>) or Fisher test (<code>fisher.test</code>).</li>
+</ul>
+<p>When <code>test = "both"</code>, both parametric and non-parametric tests are performed. Here you have an example of the use of both tests: two new columns are added.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">bivarTable</span>(Species ~<span class="st"> </span>. +<span class="st"> </span><span class="kw">log</span>(Sepal.Length), iris2, <span class="dt">margin =</span> <span class="dv">1</span>,  <span class="co"># structure</span>
+           <span class="dt">test =</span> <span class="st">"both"</span>)                                       <span class="co"># tests</span></code></pre>
+<p>I like personally to use one line for the structure and options (two lines if many options are needed), another line for the tests. The other arguments left to explain are <code>fit.model</code>, <code>outcome</code>, <code>FUN.model</code> and <code>...</code>, wich would be specified in new lines. These ones are explained in the next section.</p>
+<p>Moreover, all the p-values will be rounded using the function given the first element in <code>options()$p.value.rounding</code>. The other elements will be arguments passed to the first one called by <code>do.call</code>. The default function used for this is <code>pvalue</code>, which rounds significant p-values to the first significant digit and non-significant p-values to two decimal places. See <code>?pvalue</code>.</p>
+</div>
+<div id="fitting-models" class="section level2">
+<h2>Fitting models</h2>
+<p>If wanted, models can be fitted for every row variable with the grouping variable. The argument <code>fit.model</code> is a NAMED list of formulas that are passed to <code>update.formula</code>. For every formula in this list, an extra columnt will be added with the p-values of the significance of the first variable in the model (not counting the intercept), using <code>drop1</code>. To specify this formulas, make use of the <code>.</code> to refer either the row variable or the grouping variable. The argument <code>outcome</code>, controls whether the output variable is the one in the columns or in the rows in all the models performed (1 means the row variable is the outcome and 2 for the columns). Depending on that, a linear model is performed if the output is quantitative or a factor with more than two levels (using the order). If the output variable is a binary factor, a logistic regression model is fitted instead.</p>
+<p>For instance, we could add the p-value of the model adjusted by <code>Petal.Length</code> for every variable in <code>iris2</code> (except for the one we are adjusting by) by doing:</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">bivarTable</span>(Species ~<span class="st"> </span>. -<span class="st"> </span>Petal.Length, iris2,
+           <span class="dt">test =</span> <span class="st">"non-par"</span>, 
+           <span class="dt">fit.model =</span> <span class="kw">list</span>(<span class="dt">model1 =</span> ~<span class="st"> </span>. +<span class="st"> </span>Petal.Length),
+           <span class="dt">output =</span> <span class="dv">1</span>)</code></pre>
+<p>Always write the dot first, because the p-value provided would come from that variable. In this case, the dot is exchangable for <code>Species</code>, because the output are the variables in the rows in each model, so <code>Species</code> is always the input. However, in the next example it is not.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">bivarTable</span>(Species ~<span class="st"> </span>. -<span class="st"> </span>Petal.Length, iris2,
+           <span class="dt">test =</span> <span class="st">"non-par"</span>, 
+           <span class="dt">fit.model =</span> <span class="kw">list</span>(<span class="dt">adjusted =</span> ~<span class="st"> </span>. +<span class="st"> </span>Petal.Length,
+                            <span class="dt">interaction =</span> ~<span class="st"> </span>. *<span class="st"> </span>Petal.Length),
+           <span class="dt">output =</span> <span class="dv">2</span>)</code></pre>
+<p>In this example, another model with the interaction is fitted, so two new columns are added. However, the p-value from the variable in the row is the only one that is provided by default. If you want to print the p-value from the interaction you need to use the <code>FUN.model</code> argument which is explained in the next section.</p>
+</div>
+<div id="adding-model-outputs" class="section level2">
+<h2>Adding model outputs</h2>
+<p>Once a model if fitted, it can be used as the argument to many functions. These functions have to be specified in the argument <code>FUN.model</code>. <code>FUN.model</code> a list whose elements are vectors of characters with the names of the functions to be applied to every model. The name of these elements indicates which of the models in <code>fit.model</code> will be used. The model will be passed as the first argument to every function. You can use your own defined functions or the ones already in this package like:</p>
+<ul>
+<li>To display coefficients and SD’s use <code>getBetaSd</code>.</li>
+<li>To display p-values of the coefficients use <code>getPval</code>.</li>
+<li>To display OR and 95% CI use <code>getORCI</code>.</li>
+<li>To display Nagelkerke’s r-squared use <code>nagelkerke</code> or <code>adjNagelkerke</code> for the adjusted.</li>
+<li>To display goodness of fit p-value use <code>GoF</code>.</li>
+</ul>
+<p>When you want to display the results for every level of the row variable in its own row, use the vertical version of the functions: <code>verticalgetBetaSd</code>, <code>verticalgetPval</code> and <code>verticalgetORCI</code>.</p>
+<p>To change the arguments of these functions, add an argument (in <code>...</code>) with the same name of the model in which this functions will be applied. This argument will be a list whose elements will be lists with the arguments to pass to every function. The names of these lists indicates the function whose arguments belong to. For instance, let’s write the code for displaying the AIC of the interaction model in the last example.</p>
+<pre class="sourceCode r"><code class="sourceCode r">
+<span class="kw">bivarTable</span>(Species ~<span class="st"> </span>. -<span class="st"> </span>Petal.Length, iris2,
+           <span class="dt">test =</span> <span class="st">"non-par"</span>, 
+           <span class="dt">fit.model =</span> <span class="kw">list</span>(<span class="dt">adjusted =</span> ~<span class="st"> </span>. +<span class="st"> </span>Petal.Length,      <span class="co"># model adjusted by Petal.Length</span>
+                            <span class="dt">interaction =</span> ~<span class="st"> </span>. *<span class="st"> </span>Petal.Length),  <span class="co"># model with the interaction</span>
+           <span class="dt">output =</span> <span class="dv">1</span>,                                          <span class="co"># row variables are the outputs</span>
+           
+           <span class="dt">FUN.model =</span> <span class="kw">list</span>(<span class="dt">interaction =</span> <span class="st">"AIC"</span>),               <span class="co"># for the 'interaction' model </span>
+                                                                <span class="co"># use 'AIC' with default args</span>
+           )
+
+<span class="kw">bivarTable</span>(Species ~<span class="st"> </span>. -<span class="st"> </span>Petal.Length, iris2,
+           <span class="dt">test =</span> <span class="st">"non-par"</span>, 
+           <span class="dt">fit.model =</span> <span class="kw">list</span>(<span class="dt">adjusted =</span> ~<span class="st"> </span>. +<span class="st"> </span>Petal.Length,      <span class="co"># model adjusted by Petal.Length</span>
+                            <span class="dt">interaction =</span> ~<span class="st"> </span>. *<span class="st"> </span>Petal.Length),  <span class="co"># model with the interaction</span>
+           <span class="dt">output =</span> <span class="dv">1</span>,                                          <span class="co"># row variables are the outputs</span>
+           
+           <span class="dt">FUN.model =</span> <span class="kw">list</span>(<span class="dt">interaction =</span> <span class="kw">c</span>(<span class="st">"AIC"</span>, <span class="st">"BIC"</span>),      <span class="co"># for the 'interaction' model </span>
+                            <span class="dt">adjusted =</span> <span class="st">"AIC"</span>),                  <span class="co"># use function 'AIC' and 'BIC'</span>
+                                                                <span class="co"># just 'AIC' for the 'adjusted'</span>
+           
+           <span class="dt">interaction =</span> <span class="kw">list</span>(<span class="dt">AIC =</span> <span class="kw">list</span>(<span class="dt">k =</span> <span class="dv">10</span>))               <span class="co"># for the function 'AIC' from</span>
+                                                                <span class="co"># the model 'interaction' set arg</span>
+                                                                <span class="co"># k=10 and default args for 'BIC'</span>
+           )</code></pre>
+<p>The second call, returns the AIC from the model <code>interaction</code> using <code>k = 10</code> and the BIC with default parameters. From the model <code>adjusted</code> returns the AIC with default arguments.</p>
+</div>
+<div id="export-and-saving" class="section level2">
+<h2>Export and saving</h2>
+<p><code>export</code> method allows to export and save bivarTable objects to xlsx with a fancy style. You need openxlsx for this.It allows to export or save in latex, using xtable, or csv. For xlsx automatically opens the file with EXCEL.exe.</p>
+<pre class="sourceCode r"><code class="sourceCode r">bvt &lt;-<span class="st"> </span><span class="kw">bivarTable</span>(Species ~<span class="st"> </span>. -<span class="st"> </span>Petal.Length, iris2,
+           <span class="dt">test =</span> <span class="st">"non-par"</span>, 
+           <span class="dt">fit.model =</span> <span class="kw">list</span>(<span class="dt">adjusted =</span> ~<span class="st"> </span>. +<span class="st"> </span>Petal.Length,
+                            <span class="dt">interaction =</span> ~<span class="st"> </span>. *<span class="st"> </span>Petal.Length),
+           <span class="dt">output =</span> <span class="dv">2</span>)
+<span class="kw">export</span>(bvt, <span class="dt">type =</span> <span class="st">"xlsx"</span>)</code></pre>
+</div>
+
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+
+
+</body></html>

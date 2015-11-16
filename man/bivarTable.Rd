@@ -10,14 +10,14 @@ bivarTable(X, ...)
 
 \method{bivarTable}{default}(X, y = NULL, data = NULL,
   margin = getOption("margin"), rounding = getOption("rounding"),
-  test = c("both", "parametric", "non-parametric", "none"),
+  test = c("none", "parametric", "non-parametric", "both"),
   condense.binary.factors = getOption("condense.binary.factors"),
   drop.x = getOption("drop.x"), drop.y = getOption("drop.y"),
   fit.model = NULL, outcome = getOption("outcome"), FUN.model = NULL, ...)
 
 \method{bivarTable}{formula}(X, data = NULL, margin = getOption("margin"),
-  rounding = getOption("rounding"), test = c("both", "parametric",
-  "non-parametric", "none"),
+  rounding = getOption("rounding"), test = c("none", "parametric",
+  "non-parametric", "both"),
   condense.binary.factors = getOption("condense.binary.factors"),
   drop.x = getOption("drop.x"), drop.y = getOption("drop.y"),
   fit.model = NULL, outcome = getOption("outcome"), FUN.model = NULL, ...)

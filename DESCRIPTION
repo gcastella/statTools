@@ -9,3 +9,6 @@ Description: This R package contains some useful functions for performing simple
 Imports: openxlsx, xtable
 License: GPL (>= 2)
 RoxygenNote: 5.0.0
+Suggests: knitr,
+    rmarkdown
+VignetteBuilder: knitr

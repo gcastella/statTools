@@ -140,7 +140,6 @@ inbra <- function(before = NULL, ..., between = "-", add = NULL, rounding = getO
   return(out)
 }
 
-#' @export
 unAsIs <- function(x) {
   if("AsIs" %in% class(x)){
     class(x) <- class(x)[-match("AsIs", class(x))]
@@ -149,18 +148,36 @@ unAsIs <- function(x) {
   return(x)
 }
 
+#' Nagelkerke's pseudo r-squared
+#' 
+#' Calculating Nagelkerke's r-squared (or adjusted r-squared) coefficient from a model (glm object). 
+#' Can be passed as functions to the argument FUN.model from \code{\link{bivarTable}}.
+#' 
+#' @param model glm object.
+#' @param rounding Number of decimal places for the roundings.
+#' 
+#' @return Nagelkerke's r-squared or adjusted r-squared.
+#' 
+#' @examples
+#' m <- glm(I(Sepal.Width > 3) ~ Species + Sepal.Length, iris, family = binomial)
+#' nagelkerke(m, rounding = 2)
+#' adjNagelkerke(m, rounding = 2)
+#' 
+#' @seealso \code{\link{getPval}}, \code{\link{GoF}}, \code{\link{getORCI}}, \code{\link{getBetaSd}},
+#' \code{\link{verticalgetORCI}}, \code{\link{verticalgetBetaSd}}, \code{\link{verticalgetPval}}.
 #' @export
 nagelkerke <- function(model, rounding = getOption("rounding")){
-  if(! "glm"%in%class(model)){
-    warning("it's not a glm object")
+  if(! "glm" %in% class(model)){
+    warning("It's not a glm object")
     return("-")
   }
   n <- length(model$residuals)
-  num <- 1-exp((model$deviance - model$null.deviance)/n)
-  den <- 1-exp(- model$null.deviance/n)
-  return(round(num/den, rounding))
+  num <- 1 - exp((model$deviance - model$null.deviance) / n)
+  den <- 1 - exp(-model$null.deviance / n)
+  return(round(num / den, rounding))
 }
 
+#' @describeIn nagelkerke Adjusted Nagelkerke's pseudo r-squared.
 #' @export
 adjNagelkerke <- function(model, rounding = getOption("rounding")){
   if(! "glm"%in%class(model)){
@@ -171,13 +188,61 @@ adjNagelkerke <- function(model, rounding = getOption("rounding")){
   return(round(1-(1-r2)*(model$df.null)/(model$df.residual), rounding))
 }
 
+#' Goodness of Fit p-value
+#' 
+#' Assessing the fit of a model with Pearson's GoF statistic
+#' 
+#' @param model Model passed to \code{residuals(., "pearson")}.
+#' 
+#' @return Resulting p-value from the test. 
+#' 
+#' @examples
+#' m <- glm(I(Sepal.Width > 3) ~ Species + Sepal.Length, iris, family = binomial)
+#' GoF(m)
+#' 
 #' @export
+#' @seealso \code{\link{getPval}}, \code{\link{nagelkerke}}, \code{\link{getORCI}}, \code{\link{getBetaSd}},
+#' \code{\link{verticalgetORCI}}, \code{\link{verticalgetBetaSd}}, \code{\link{verticalgetPval}}.
 GoF <- function(model){
   residus <- residuals(model, "pearson")
   pval.gf <- do.call(getOption("p.value.rounding")[[1]], c(list(pval = 1 - pchisq(sum(residus^2), length(residus) - length(model$coef))), getOption("p.value.rounding")[-1]))
   return(pval.gf)
 }
 
+
+#' Extracting P-values, Coefficients or OR (95\% CI) from a lm or glm object
+#' 
+#' Functions for fancy printing P-values, Coefficients or OR (95\% CI) from glm object. Prepared for \code{\link{bivarTable}} FUN.model.
+#' 
+#' @details
+#' These functions are mainly thought to be used in the bivarTable FUN.model argument. The first argument has to be a model.
+#' They all get some information from the model (OR, p-values, coefficients, etc.) and display them as a vector. 
+#' The vertical version of the functions, return a one column matrix with the results: one value for each level of the variable.
+#' Appends "Ref." or "1" to the reference level. In case of quantitative input variable, the output is the same
+#' for the vertical and non-vertical versions. See examples.
+#' 
+#' @param model glm or lm object.
+#' @param var Vector for extracting values from the summary(model)$coef matrix. Row 1 is for the intercept.
+#' 
+#' @return A vector with p-values, Beta's(SD) or OR (95\% CI)
+#' @examples
+#' m <- glm(I(Sepal.Width > 3) ~ Species + Sepal.Length, iris, family = binomial)
+#' getPval(m, vars = -1) # p-values from everything but the intercept
+#' getPval(m, vars = 2:3) # p-values from rows 2 and 3 of the matrix
+#' getPval(m, vars = grep(pattern = "Species", x = names(m$coeff))) # or coefficients from Species
+#' getORCI(m, vars = 2:3)
+#' getBetaSd(m, vars = 2:3)
+#' 
+#' verticalgetBetaSd(m, vars = grep("Species", x = names(m$coeff)), reference = 1)
+#' verticalgetPval(m, vars = grep("Species", x = names(m$coeff)), reference = 1)
+#' verticalgetORCI(m, vars = grep("Species", x = names(m$coeff)), reference = 1)
+#' 
+#' bivarTable(I(Sepal.Width > 3) ~ . - Sepal.Length - Sepal.Width, data = iris,  
+#'            fit.model = list(adjusted = ~ . + Sepal.Length), # model to fit for every variable in rhs of the formula.
+#'            outcome = 2, # the output of the models is the variable in the column (lhs of formula)
+#'            FUN.model = list(adjusted = c("verticalgetBetaSd", "verticalgetORCI", "verticalgetPval"))) # add columns with extra info for the adjusted model.
+#' 
+#' @seealso \code{\link{GoF}}, \code{\link{nagelkerke}}
 #' @export
 getPval <- function(model, vars = 2){
   sm <- summary(model)
@@ -187,6 +252,7 @@ getPval <- function(model, vars = 2){
   return(out)
 }
 
+#' @describeIn getPval Get the coefficients of the model and SD from lm or glm.
 #' @export
 getBetaSd <- function(model, vars = 2){
   sm <- summary(model)
@@ -196,6 +262,8 @@ getBetaSd <- function(model, vars = 2){
   return(out)
 }
 
+#' @describeIn getPval For glm models, get the OR and 95\% CI. 
+#' @param between String for collapsing lower and upper limits of the CI.
 #' @export
 getORCI <- function(model, vars = 2, between = ";"){
   if("glm" %in% class(model)){
@@ -206,6 +274,8 @@ getORCI <- function(model, vars = 2, between = ";"){
   } else {return(rep("-", length(vars)))}
 }
 
+#' @describeIn getPval Vertical version of getPval. Used in bivarTable.
+#' @param reference Which value is the refference level in case of categorical variable?.
 #' @export
 verticalgetPval <- function(model, vars = grep(pattern = "invar", x = names(model$coef)), reference = 1){
   sm <- summary(model)
@@ -217,6 +287,7 @@ verticalgetPval <- function(model, vars = grep(pattern = "invar", x = names(mode
   return(out)
 }
 
+#' @describeIn getPval Vertical version of getBetaSd. Used in bivarTable.
 #' @export
 verticalgetBetaSd <- function(model, vars = grep(pattern = "invar", x = names(model$coef)), reference = 1){
   sm <- summary(model)
@@ -228,6 +299,7 @@ verticalgetBetaSd <- function(model, vars = grep(pattern = "invar", x = names(mo
   return(out)
 }
 
+#' @describeIn getPval Vertical version of getORCI. Used in bivarTable.
 #' @export
 verticalgetORCI <- function(model, vars = grep(pattern = "invar", x = names(model$coef)), between = ";", reference = 1){
   if("glm" %in% class(model)){

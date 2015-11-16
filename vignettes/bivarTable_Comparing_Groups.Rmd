@@ -1,0 +1,117 @@
+---
+title: "Comparing groups with bivarTable"
+author: "Gerard Castellà Canals"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Comparing groups with bivarTable}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r initial_chunk}
+knitr::opts_chunk$set(collapse = T, comment = "#>", size = "small")
+library(statTools)
+```
+
+
+When performing a statistical analysis most of the times differences between two or more groups need to be assessed. `bivarTable` function is thought to address this issue constructing a table with the results from the comparison. It is particularly useful when searching for confounding variables or simply assessing differences in the outcomes, adjusting to avoid confusion. 
+
+The aim is to provide a useful function in R to allow statisticians to perform this kind of analyses quicker and easier, saving a lot of time. However, `bivarTable` is very flexible and can assess different hypothesis at a time, allowing different arguments to customize the tables. 
+
+The package statTools also includes an `export` method, that exports the created tables to latex (via xtable), xlsx (via openxlsx) or csv. 
+
+## The structure
+
+`bivarTable` constructs a matrix with the results of comparing variables by groups. The levels of the grouping variable will be displayed in columns, and in the rows all the variables in which the differences will be assessed. An extra column called `Total` will be always displayed, with the overall description of the sample. All this structure is summarized with a formula (argument `X`), where the LHS indicates the variable displayed in the columns (i.e. grouping variable) and the RHS all the variables in the rows. To sum up:
+
+`Grouping Variable ~ Variable 1 + Variable 2 + ... + Variable n`
+
+or equivalently,
+
+`Columns ~ Row 1 + Row 2 + ... + Row n`
+
+Notice that ONLY one term is allowed in the LHS and interaction terms are not handled (only additive terms). In addition, since the names of the terms of the formula are assumed to be columns in the argument `data`, the dot `.` can be used to add all other variables in the data not mentioned in the formula. You can make use also of the `-`operator to remove terms from the formula. When LHS is not provided, only a table with the overall description is produced. The following code, depicts the structure explained, using the iris dataset as example. 
+
+```{r}
+bivarTable(Species ~ ., iris)
+```
+
+
+
+
+The rhs will ONLY contain additive terms or transformations of the variables in the argument data. The minus symbol is also allowed. These variables will be the rows of the table, i.e. where the differences between the groups will be assessed. For instance, we will use the iris dataset to give an example. We create some more variables first.
+
+```{r}
+iris2 <- iris
+iris2$Sepal.Total.CAT2 <- cut(iris$Sepal.Width + iris$Sepal.Length, breaks = 2)
+iris2$Sepal.Total.CAT3 <- cut(iris$Sepal.Width + iris$Sepal.Length, breaks = 3)
+iris2$Sepal.Total.CAT5 <- cut(iris$Sepal.Width + iris$Sepal.Length, breaks = 5)
+```
+
+If we want some descriptive statistics among species, for all the variables in the dataset, we can write
+
+```{r}
+bivarTable(Species ~ ., 
+           data = iris2, 
+           test = "none")
+```
+
+Notice that ```bivarTable```:
+
+- Produces an overall descriptive and  by groups.
+- N's in every group are provided, and percentage as well.
+- The percentage in the overall column indicates that 100\%  of the values of grouping variable are non-missing.
+- mean (SD) or absolute frequency (relative frequency) for quantitative and qualitative variables, respectively. 
+- For the qualitative variables, each percentage is calculated from the total in the column. You can change that by setting margin = 1 (2 by default), like in ```prop.table```.
+- There's an argument which was not explained yet. Pattience, we will get there soon.
+
+
+When ```bivarTable``` is executed without lhs, only overall descriptives are produced. The argument margin
+Relative frequencies can be displayed to sum 100 \% 
+
+In addition, differences in the mean or the proportions are assessed with some tests. There are two kind of tests that are used by default: parametric and non parametric tests. This is controlled by the argument ```test```.
+
+## Descriptive analyses
+
+Most of the times you just want some descriptive of the data (means and sds, frequencies and percentages).
+
+Note the various macros within the `vignette` setion of the metadata block above. These are required in order to instruct R how to build the vignette. Note that you should change the `title` field and the `\VignetteIndexEntry` to match the title of your vignette.
+
+## Styles
+
+The `html_vignette` template includes a basic CSS theme. To override this theme you can specify your own CSS in the document metadata as follows:
+
+    output: 
+      rmarkdown::html_vignette:
+        css: mystyles.css
+
+## Figures
+
+The figure sizes have been customised so that you can easily put two images side-by-side. 
+
+```{r, fig.show='hold'}
+plot(1:10)
+plot(10:1)
+```
+
+You can enable figure captions by `fig_caption: yes` in YAML:
+
+    output:
+      rmarkdown::html_vignette:
+        fig_caption: yes
+
+Then you can use the chunk option `fig.cap = "Your figure caption."` in **knitr**.
+
+## More Examples
+
+You can write math expressions, e.g. $Y = X\beta + \epsilon$, footnotes^[A footnote here.], and tables, e.g. using `knitr::kable()`.
+
+```{r, echo=FALSE, results='asis'}
+knitr::kable(head(mtcars, 10))
+```
+
+Also a quote using `>`:
+
+> "He who gives up [code] safety for [code] speed deserves neither."
+([via](https://twitter.com/hadleywickham/status/504368538874703872))

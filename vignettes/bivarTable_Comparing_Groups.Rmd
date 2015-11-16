@@ -10,8 +10,9 @@ vignette: >
 ---
 
 ```{r initial_chunk}
-knitr::opts_chunk$set(collapse = T, comment = "#>", size = "small")
+library(knitr)
 library(statTools)
+opts_chunk$set(collapse = T, comment = "#>", size = "small")
 ```
 
 
@@ -34,7 +35,7 @@ or equivalently,
 Notice that ONLY one term is allowed in the LHS and interaction terms are not handled (only additive terms). In addition, since the names of the terms of the formula are assumed to be columns in the argument `data`, the dot `.` can be used to add all other variables in the data not mentioned in the formula. You can make use also of the `-`operator to remove terms from the formula. When LHS is not provided, only a table with the overall description is produced. The following code, depicts the structure explained, using the iris dataset as example. 
 
 ```{r}
-bivarTable(Species ~ ., iris)
+bivarTable(Species ~ ., iris, test = "none")
 ```
 
 

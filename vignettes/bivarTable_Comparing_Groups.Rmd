@@ -9,10 +9,10 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r initial_chunk}
+```{r initial_chunk, warning=FALSE, message=FALSE}
 library(knitr)
 library(statTools)
-opts_chunk$set(collapse = T, comment = "#>", size = "small")
+opts_chunk$set(collapse = T, comment = "#>", eval = FALSE)
 ```
 
 
@@ -35,84 +35,140 @@ or equivalently,
 Notice that ONLY one term is allowed in the LHS and interaction terms are not handled (only additive terms). In addition, since the names of the terms of the formula are assumed to be columns in the argument `data`, the dot `.` can be used to add all other variables in the data not mentioned in the formula. You can make use also of the `-`operator to remove terms from the formula. When LHS is not provided, only a table with the overall description is produced. The following code, depicts the structure explained, using the iris dataset as example. 
 
 ```{r}
-bivarTable(Species ~ ., iris, test = "none")
+bivarTable(Species ~ ., iris)
 ```
 
+An unquoted matrix is printed (internally returns a list where the first argument is the table printed), with the totals and the levels of `Species` (LHS) as columns and all the remaining variables in `iris` as rows. Notice also that:
 
+- N's in every group are provided, and percentage as well in the row names.
+- The percentage in the overall column indicates that 100\%  of the values of grouping variable are non-missing.
+- Each cell has the mean (SD) or absolute frequency (relative frequency * 100) for quantitative and qualitative variables, respectively. 
+- For the qualitative variables, each percentage is calculated from the total in the column. 
+- There's an argument which was not explained yet. Pattience, we will get there soon.
 
+This is one of the most basic tables that can be generated with `bivartable`. Other arguments than can control the output produced by default:
 
-The rhs will ONLY contain additive terms or transformations of the variables in the argument data. The minus symbol is also allowed. These variables will be the rows of the table, i.e. where the differences between the groups will be assessed. For instance, we will use the iris dataset to give an example. We create some more variables first.
+- To change the percentages for qualitative variables (rows to sum 100\% instead of columns) use `margin = 1` instead of the default `margin = 2`. It is passed to `prop.table`
+- To display more decimal places, use `rounding`. By default only two decimals are printed: `rounding = 2`. This argument reads in fact the element `rounding` from options. 
+- By default, binary factors in the rows are displayed as one row (usually the second, except the first one has level "Yes", "1", or something similar) and giving the label of the row displayed in brackets. Set the argument `condense.binary.factors` to `FALSE` to display both levels (rows).
+- By default, the grouping variable is transformed to factor using `factor` function. This removes unused categories. To change that, use `drop.y = FALSE`.
+- The same is done for the rows when are factors. To change that set `drop.x` to `FALSE`. These agruments can change the number of rows and columns and must be used carefully because they can lead (and avoid) to  errors. 
+
+Most of these arguments can be set by default throughout all the session via `options(argument = <value>)`. We will add some qualitative variables to the `iris` dataset to better illustrate the effect of some of these arguments:
 
 ```{r}
 iris2 <- iris
 iris2$Sepal.Total.CAT2 <- cut(iris$Sepal.Width + iris$Sepal.Length, breaks = 2)
 iris2$Sepal.Total.CAT3 <- cut(iris$Sepal.Width + iris$Sepal.Length, breaks = 3)
 iris2$Sepal.Total.CAT5 <- cut(iris$Sepal.Width + iris$Sepal.Length, breaks = 5)
+
+bivarTable(Species ~ . + log(Sepal.Length), iris2, 
+           rounding = 3, margin = 2, condense.binary.factors = TRUE)
+bivarTable(Species ~ . + log(Sepal.Length), iris2, margin = 1, condense.binary.factors = FALSE)
 ```
 
-If we want some descriptive statistics among species, for all the variables in the dataset, we can write
+Notice that the formula allows transformations of the variables like logarithm in this case.
+
+## Assessing differences
+
+Once the basic structure of the table is set, extra columns can be added with the p-values resulting from tests assessing differences between groups in each of the row variables. Argument `test` controls this issue. By default, `test = "none"`, no tests are performed. However, there are other options for this argument: `"parametric"`, `"non-parametric"` and `"both"`. These options will perform the tests specified in the elements `"parametric.tests"` and `"non.parametric.tests"` from options. One parametric test and one non-parametric test are defined for every possible scenario respectively.
+
+- Quantitative row variable vs binary grouping variable: t-test (`t.test`) or Mann-Whitney test (`wilcox.test`).
+- Quantitative row variable vs non-binary grouping variable: ANOVA (`oneway.test`) or Kruskal-Wallis test (`kruskal.test`).
+- Qualitative row variable: Chi-squared test (`chisq.test`) or Fisher test (`fisher.test`).
+
+When `test = "both"`, both parametric and non-parametric tests are performed. Here you have an example of the use of both tests: two new columns are added.
 
 ```{r}
-bivarTable(Species ~ ., 
-           data = iris2, 
-           test = "none")
+bivarTable(Species ~ . + log(Sepal.Length), iris2, margin = 1,  # structure
+           test = "both")                                       # tests
 ```
 
-Notice that ```bivarTable```:
+I like personally to use one line for the structure and options (two lines if many options are needed), another line for the tests. The other arguments left to explain are `fit.model`, `outcome`, `FUN.model` and `...`, wich would be specified in new lines. These ones are explained in the next section.
 
-- Produces an overall descriptive and  by groups.
-- N's in every group are provided, and percentage as well.
-- The percentage in the overall column indicates that 100\%  of the values of grouping variable are non-missing.
-- mean (SD) or absolute frequency (relative frequency) for quantitative and qualitative variables, respectively. 
-- For the qualitative variables, each percentage is calculated from the total in the column. You can change that by setting margin = 1 (2 by default), like in ```prop.table```.
-- There's an argument which was not explained yet. Pattience, we will get there soon.
+Moreover, all the p-values will be rounded using the function given the first element in `options()$p.value.rounding`. The other elements will be arguments passed to the first one called by `do.call`. The default function used for this is `pvalue`, which rounds significant p-values to the first significant digit and non-significant p-values to two decimal places. See `?pvalue`.
 
 
-When ```bivarTable``` is executed without lhs, only overall descriptives are produced. The argument margin
-Relative frequencies can be displayed to sum 100 \% 
+## Fitting models
 
-In addition, differences in the mean or the proportions are assessed with some tests. There are two kind of tests that are used by default: parametric and non parametric tests. This is controlled by the argument ```test```.
+If wanted, models can be fitted for every row variable with the grouping variable. The argument `fit.model` is a NAMED list of formulas that are passed to `update.formula`. For every formula in this list, an extra columnt will be added with the p-values of the significance of the first variable in the model (not counting the intercept), using `drop1`. To specify this formulas, make use of the `.` to refer either the row variable or the grouping variable. The argument `outcome`, controls whether the output variable is the one in the columns or in the rows in all the models performed (1 means the row variable is the outcome and 2 for the columns). Depending on that, a linear model is performed if the output is quantitative or a factor with more than two levels (using the order). If the output variable is a binary factor, a logistic regression model is fitted instead.
 
-## Descriptive analyses
+For instance, we could add the p-value of the model adjusted by `Petal.Length` for every variable in `iris2` (except for the one we are adjusting by) by doing:
 
-Most of the times you just want some descriptive of the data (means and sds, frequencies and percentages).
-
-Note the various macros within the `vignette` setion of the metadata block above. These are required in order to instruct R how to build the vignette. Note that you should change the `title` field and the `\VignetteIndexEntry` to match the title of your vignette.
-
-## Styles
-
-The `html_vignette` template includes a basic CSS theme. To override this theme you can specify your own CSS in the document metadata as follows:
-
-    output: 
-      rmarkdown::html_vignette:
-        css: mystyles.css
-
-## Figures
-
-The figure sizes have been customised so that you can easily put two images side-by-side. 
-
-```{r, fig.show='hold'}
-plot(1:10)
-plot(10:1)
+```{r}
+bivarTable(Species ~ . - Petal.Length, iris2,
+           test = "non-par", 
+           fit.model = list(model1 = ~ . + Petal.Length),
+           output = 1)
 ```
 
-You can enable figure captions by `fig_caption: yes` in YAML:
+Always write the dot first, because the p-value provided would come from that variable. In this case, the dot is exchangable for `Species`, because the output are the variables in the rows in each model, so `Species` is always the input. However, in the next example it is not.
 
-    output:
-      rmarkdown::html_vignette:
-        fig_caption: yes
-
-Then you can use the chunk option `fig.cap = "Your figure caption."` in **knitr**.
-
-## More Examples
-
-You can write math expressions, e.g. $Y = X\beta + \epsilon$, footnotes^[A footnote here.], and tables, e.g. using `knitr::kable()`.
-
-```{r, echo=FALSE, results='asis'}
-knitr::kable(head(mtcars, 10))
+```{r}
+bivarTable(Species ~ . - Petal.Length, iris2,
+           test = "non-par", 
+           fit.model = list(adjusted = ~ . + Petal.Length,
+                            interaction = ~ . * Petal.Length),
+           output = 2)
 ```
 
-Also a quote using `>`:
+In this example, another model with the interaction is fitted, so two new columns are added. However, the p-value from the variable in the row is the only one that is provided by default. If you want to print the p-value from the interaction you need to use the `FUN.model` argument which is explained in the next section. 
 
-> "He who gives up [code] safety for [code] speed deserves neither."
-([via](https://twitter.com/hadleywickham/status/504368538874703872))
+## Adding model outputs
+
+Once a model if fitted, it can be used as the argument to many functions. These functions have to be specified in the argument `FUN.model`. `FUN.model` a list whose elements are vectors of characters with the names of the functions to be applied to every model. The name of these elements indicates which of the models in `fit.model` will be used. The model will be passed as the first argument to every function. You can use your own defined functions or the ones already in this package like:
+
+- To display coefficients and SD's use `getBetaSd`.
+- To display p-values of the coefficients use `getPval`.
+- To display OR and 95\% CI use `getORCI`.
+- To display Nagelkerke's r-squared use `nagelkerke` or `adjNagelkerke` for the adjusted.
+- To display goodness of fit p-value use `GoF`.
+
+When you want to display the results for every level of the row variable in its own row, use the vertical version of the functions: `verticalgetBetaSd`,  `verticalgetPval` and `verticalgetORCI`.
+
+To change the arguments of these functions, add an argument (in `...`) with the same name of the model in which this functions will be applied. This argument will be a list whose elements will be lists with the arguments to pass to every function. The names of these lists indicates the function whose arguments belong to. For instance, let's write the code for displaying the AIC of the interaction model in the last example.
+
+```{r}
+
+bivarTable(Species ~ . - Petal.Length, iris2,
+           test = "non-par", 
+           fit.model = list(adjusted = ~ . + Petal.Length,      # model adjusted by Petal.Length
+                            interaction = ~ . * Petal.Length),  # model with the interaction
+           output = 1,                                          # row variables are the outputs
+           
+           FUN.model = list(interaction = "AIC"),               # for the 'interaction' model 
+                                                                # use 'AIC' with default args
+           )
+
+bivarTable(Species ~ . - Petal.Length, iris2,
+           test = "non-par", 
+           fit.model = list(adjusted = ~ . + Petal.Length,      # model adjusted by Petal.Length
+                            interaction = ~ . * Petal.Length),  # model with the interaction
+           output = 1,                                          # row variables are the outputs
+           
+           FUN.model = list(interaction = c("AIC", "BIC"),      # for the 'interaction' model 
+                            adjusted = "AIC"),                  # use function 'AIC' and 'BIC'
+                                                                # just 'AIC' for the 'adjusted'
+           
+           interaction = list(AIC = list(k = 10))               # for the function 'AIC' from
+                                                                # the model 'interaction' set arg
+                                                                # k=10 and default args for 'BIC'
+           )
+```
+
+The second call, returns the AIC from the model `interaction` using `k = 10` and the BIC with default parameters. From the model `adjusted` returns the AIC with default arguments.
+
+
+## Export and saving 
+
+`export` method allows to export and save bivarTable objects to xlsx with a fancy style. You need openxlsx for this.It allows to export or save in latex, using xtable, or csv. For xlsx automatically opens the file with EXCEL.exe.
+
+```{r}
+bvt <- bivarTable(Species ~ . - Petal.Length, iris2,
+           test = "non-par", 
+           fit.model = list(adjusted = ~ . + Petal.Length,
+                            interaction = ~ . * Petal.Length),
+           output = 2)
+export(bvt, type = "xlsx")
+```
+

@@ -422,3 +422,49 @@ toNumeric <- function(data, select){
   }
   return(data)
 }
+
+descr <- function(x, ...) UseMethod("descr")
+descr.default <- function(x, y, ...){
+  message("Unhandled class for", deparse(substitute(x)))
+  return("-")
+}
+descr.numeric <- function(x, y = NULL, rounding = getOption("rounding"), show.quantiles = NULL){
+  
+  mitjanes <- ifelse(is.na(mean(x, na.rm = T)), 
+                     "-", 
+                     round(mean(x, na.rm = T), rounding))
+  desvsd <- ifelse(is.na(sd(x, na.rm = T)), 
+                   "-", 
+                   round(sd(x, na.rm = T), rounding))
+  quants <- NULL
+  if(!is.null(show.quantiles)){
+    quants <- ifelse(is.na(quantile(x, probs = show.quantiles, na.rm = TRUE)), 
+                     "-", 
+                     round(quantile(x, probs = show.quantiles, na.rm = TRUE), rounding))
+    quants <- paste0(quants, collapse = " - ")
+    out <- inbra(mitjanes, desvsd, quants, between = "; ")
+  } else {
+    out <- inbra(mitjanes, desvsd)
+  }
+  if(!is.null(y)){
+    mitjanes <- ifelse(is.na(tapply(x, y, mean, na.rm = TRUE)), 
+                       "-", 
+                       round(tapply(x, y, mean, na.rm = TRUE), rounding))
+    desvsd <- ifelse(is.na(tapply(x, y, sd, na.rm = TRUE)), 
+                     "-", 
+                     round(tapply(x, y, sd, na.rm = TRUE), rounding))
+    if(!is.null(show.quantiles)){
+      quants <- ifelse(is.na(tapply(x, y, quantile, probs = show.quantiles, na.rm = TRUE)), 
+                       "-", 
+                       lapply(tapply(x, y, quantile, probs = show.quantiles, na.rm = TRUE), round, rounding)) 
+      quants <- sapply(quants, paste0, collapse = " - ")
+      out <- inbra(mitjanes, desvsd, quants, between = "; ")
+    } else {
+      out <- inbra(mitjanes, desvsd, between = "; ")
+    }
+  }
+  t(out)
+}
+
+descr.factor <- function(x, y = NULL, rounding = getOption("rounding")){
+}

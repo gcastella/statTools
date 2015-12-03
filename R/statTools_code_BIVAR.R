@@ -499,16 +499,17 @@ export.bivarTable <- function(X,
                               type = "xlsx",
                               file = tempfile(pattern = "exportBivarTable", fileext = paste0(".", type)), 
                               caption = NULL,
-                              label = NULL, ...){
+                              label = NULL,
+                              ...){
   type <- rev(strsplit(file, "\\.")[[1]])[1]
   taula <- X$table
-  col.names <- colnames(taula)
-  row.names <- rownames(taula)
-  row.data <- X$X
-  col.vect <- X$y[,1]
-  nmy <- names(X$y)
-  lly <- length(levels(col.vect))
-  ntests <- if(X$test == "none") 0 else if(X$test == "both") 2 else 0
+  names_cols <- colnames(taula)
+  names_rows<- rownames(taula)
+  rhs_data <- X$X
+  grouped_by <- X$y[, 1]
+  names_y <- names(X$y)
+  lly <- nlevels(grouped_by)
+  ntests <- if(X$test == "none") 0 else if(X$test == "both") 2 else 1
   model <- X$fit.model
   
   if(type == "csv"){
@@ -517,94 +518,125 @@ export.bivarTable <- function(X,
     export.default(taula, file = file, ...)
   } else if(type == "xlsx"){
     
+    # add linebreaks in some cols
+    names_cols <- sapply(strsplit(split = " \\(", names_cols), paste0, collapse = "\n(")
+    
+    #create wb
     wb <- createWorkbook()
     modifyBaseFont(wb, fontSize = 8)
     addWorksheet(wb = wb, sheetName = "BIVARTABLE")
     
     # styles
-    row1Style <- createStyle(border = "BottomLeftRight", valign = "center", halign = "center", textDecoration = c("italic", "bold"))
-    col1Style.vars <- createStyle(border = "Right", valign = "center", halign = "left", textDecoration = c("italic", "bold"))
-    col1Style.levels <- createStyle(border = "Right", valign = "center", halign = "right", textDecoration = c("italic", "bold"))
+    header_sty <- createStyle(border = "TopBottom", valign = "center", halign = "center", textDecoration = c("italic", "bold"))
+    variables_sty <- createStyle(valign = "center", halign = "left", textDecoration = c("italic", "bold"))
+    levels_sty <- createStyle(valign = "center", halign = "right", textDecoration = c("italic", "bold"))
+    data_sty <- createStyle(valign = "center", halign = "right")
+    bgcol_sty <- createStyle(bgFill = "#DBDBDB", fgFill = "#DBDBDB")
     
-    # first row
+    # headers
     mergeCells(wb = wb, sheet = 1, cols = 1, rows = 1:2)
     mergeCells(wb = wb, sheet = 1, cols = 2, rows = 1:2)
-    writeData(wb = wb, sheet = 1, x = col.names[1], startCol = 2, startRow = 1, colNames = TRUE, rowNames = TRUE)
-    vlineafter <- c(1, 2)
-
-    if(!is.null(col.vect)){
-      mergeCells(wb = wb, sheet = 1, cols = 3:(lly + 2), rows = 1)
-      writeData(wb = wb, sheet = 1, x = nmy, startCol = 3, startRow = 1, colNames = TRUE, rowNames = TRUE)
-      writeData(wb = wb, sheet = 1, x = row.names, startCol = 1, startRow = 3, colNames = TRUE, rowNames = TRUE)
-      writeData(wb = wb, sheet = 1, x = t(as.matrix(col.names[2:(lly + 1)])), startCol = 3, startRow = 2, colNames = FALSE, rowNames = FALSE)
-      vlineafter <- c(vlineafter, lly + 2)
-
-      if(ntests==2){
-        mergeCells(wb = wb, sheet = 1, cols = (3 + lly) : (4 + lly), rows = 1)
-        writeData(wb = wb, sheet = 1, x = "p-values", startCol = 3 + lly, startRow = 1, colNames = FALSE, rowNames = FALSE)
-        writeData(wb = wb, sheet = 1, x = t(as.matrix(gsub(pattern = " p-value", replacement = "", col.names[(2 + lly):(2 + lly + (X$test == "both"))]))), startCol = 3 + lly, startRow = 2, colNames = FALSE, rowNames = FALSE)
+    writeData(wb = wb, sheet = 1, x = names_cols[1], 
+              startCol = 2, startRow = 1, 
+              colNames = TRUE, rowNames = TRUE)
+    
+    if(!is.null(grouped_by)){
+      mergeCells(wb = wb, sheet = 1, cols = 1:lly + 2, rows = 1)
+      writeData(wb = wb, sheet = 1, x = names_y, 
+                startCol = 3, startRow = 1, 
+                colNames = TRUE, rowNames = TRUE)
+      writeData(wb = wb, sheet = 1, x = names_rows, 
+                startCol = 1, startRow = 3, 
+                colNames = TRUE, rowNames = TRUE)
+      writeData(wb = wb, sheet = 1, x = t(names_cols[1:lly + 1]), 
+                startCol = 3, startRow = 2, 
+                colNames = FALSE, rowNames = FALSE)
+      
+      if(ntests == 2){
+        mergeCells(wb = wb, sheet = 1, cols = lly + 2 + 1:2, rows = 1)
+        writeData(wb = wb, sheet = 1, x = "p-value", 
+                  startCol = 3 + lly, startRow = 1, 
+                  colNames = FALSE, rowNames = FALSE)
+        writeData(wb = wb, sheet = 1, 
+                  x = t(gsub(pattern = " p-value", replacement = "", names_cols[lly + 2 + 0:1])), 
+                  startCol = lly + 2 + 1, startRow = 2, 
+                  colNames = FALSE, rowNames = FALSE)
       } else if(ntests == 1){
-        writeData(wb = wb, sheet = 1, x = "p-value", startCol = 3 + lly, startRow = 1, colNames = FALSE, rowNames = FALSE)
-        writeData(wb = wb, sheet = 1, x = X$test, startCol = 3 + lly, startRow = 2, colNames = FALSE, rowNames = FALSE)
+        mergeCells(wb = wb, sheet = 1, cols = lly + 2 + 1, rows = 1:2)
+        writeData(wb = wb, sheet = 1, 
+                  x = paste(gsub(pattern = "non-", replacement = "non-\n", x = X$test), "\n p-value"), 
+                  startCol = 3 + lly, startRow = 1, 
+                  colNames = FALSE, rowNames = FALSE)
       }
-      vlineafter <- c(vlineafter, 2+lly+ntests)
       
       if(!is.null(model)){
-        for(i in 1:length(model)){
-          nom <- paste0(names(model)[i], " ")
-          quins <- grepl(pattern = nom, col.names)
-          illa <- sum(diff(c(F, quins, F))!=0) <= 2
-          if(illa & sum(quins)>1){
-            col.names[quins] <- gsub(pattern = nom, replacement = "", col.names[quins])
+        for(i in seq_along(model)){
+          nom <- names(model)[i]
+          quins <- grepl(pattern = nom, names_cols)
+          illa <- sum(diff(c(F, quins, F)) != 0) >= 2
+          if(illa & sum(quins) > 1){
+            names_cols[quins] <- gsub(pattern = nom, replacement = "", names_cols[quins])
             celes <- range(which(quins) + 1)
             mergeCells(wb = wb, sheet = 1, cols = celes, rows = 1)
-            writeData(wb = wb, sheet = 1, startCol = celes[1], startRow = 1, x = nom, colNames = FALSE, rowNames = FALSE)
-            writeData(wb = wb, sheet = 1, startCol = celes[1], startRow = 2, x = t(as.matrix(col.names[quins])), colNames = FALSE, rowNames = FALSE)
-            vlineafter <- c(vlineafter, celes[2])
-          } else if(illa & sum(quins)==1){
-            col.names[quins] <- gsub(pattern = nom, replacement = "", col.names[quins])
-            writeData(wb = wb, sheet = 1, startCol = which(quins) + 1, startRow = 1, x = nom, colNames = FALSE, rowNames = FALSE)
-            writeData(wb = wb, sheet = 1, startCol = which(quins) + 1, startRow = 2, x = col.names[quins], colNames = FALSE, rowNames = FALSE)
-            vlineafter <- c(vlineafter, which(quins) + 1)
+            writeData(wb = wb, sheet = 1, 
+                      startCol = celes[1], startRow = 1, 
+                      x = paste(nom, "model"), 
+                      colNames = FALSE, rowNames = FALSE)
+            writeData(wb = wb, sheet = 1, 
+                      startCol = celes[1], startRow = 2, 
+                      x = t(names_cols[quins]), 
+                      colNames = FALSE, rowNames = FALSE)
+          } else if(illa & sum(quins) == 1){
+            names_cols[quins] <- gsub(pattern = paste0(nom, " "), replacement = paste0(nom, "\n"), names_cols[quins])
+            names_cols[quins] <- gsub(pattern = paste0(" ", nom), replacement = paste0("\n", nom), names_cols[quins])
+            writeData(wb = wb, sheet = 1, 
+                      startCol = which(quins) + 1, startRow = 1, 
+                      x = nom, 
+                      colNames = FALSE, rowNames = FALSE)
+            writeData(wb = wb, sheet = 1, 
+                      startCol = which(quins) + 1, startRow = 2, 
+                      x = names_cols[quins], 
+                      colNames = FALSE, rowNames = FALSE)
           }
         }
       }
     }
     
-    # writeData's
-    writeData(wb = wb, sheet = 1, x = taula, startCol = 2, startRow = 3, colNames = FALSE, rowNames = FALSE)
+    # data
+    writeData(wb = wb, sheet = 1, 
+              x = taula, 
+              startCol = 2, startRow = 3, 
+              colNames = FALSE, rowNames = FALSE)
     
-    # add styles
-    ## fer un for q vagi recorrent tota la matriu i vagi mirant si es un titol posali aquest estil, si es noseque posali tal altre, ...
-    celes <- expand.grid(1:(2 + length(row.names)), 1:(1 + length(col.names)))
-    
-    addStyle(wb = wb, sheet = 1, rows = celes[[1]], cols = celes[[2]], style = createStyle(halign="right", valign="center"))
-    addStyle(wb = wb, sheet = 1, rows = 1:(2 + length(row.names)), cols = rep(2, length(1:(2+length(row.names)))), style = createStyle(border="Right", halign="right", valign="center"))
-    addStyle(wb = wb, sheet = 1, rows = 1:(2 + length(row.names)), cols = rep(2 + lly + (X$test != "none") + (X$test == "both"), length(1:(2 + length(row.names)))), style = createStyle(border = "Right", halign = "right", valign = "center"))
-    addStyle(wb = wb, sheet = 1, rows = 1:(2 + length(row.names)), cols = rep(lly + 2, length(1:(2 + length(row.names)))), style = createStyle(border = "Right", halign = "right", valign = "center"))
-    
-    addStyle(wb = wb, sheet = 1, rows = 1:(length(row.names) + 2), cols = rep(1, length(1:(length(row.names) + 2))), style = col1Style.vars)
-    rowlevels <- which(sapply(row.names, function(x){
-      any(sapply(as.list(row.data), function(y){
-        if(is.factor(y)){
-          any(x %in% levels(y))
-        } else FALSE
-      }))
-    })) + 2
-    if(length(rowlevels)>0) addStyle(wb = wb, sheet = 1, rows = rowlevels, cols = rep(1, length(rowlevels)), style = col1Style.levels)
-    
-    addStyle(wb = wb, sheet = 1, rows = rep(1, length(col.names) + 1), cols = 1:(length(col.names) + 1), style = row1Style)
-    addStyle(wb = wb, sheet = 1, rows = rep(2, length(col.names) + 1), cols = 1:(length(col.names) + 1), style = row1Style)
-    addStyle(wb = wb, sheet = 1, rows = 1:2, cols = c(2, 2), style = createStyle(border = "LeftBottomRight", textDecoration = c("italic", "bold"), valign = "center", halign = "center"))
-    addStyle(wb = wb, sheet = 1, rows = rep(1, length(3:(lly + 2))), cols = 3:(lly + 2), style = createStyle(border = "LeftBottomRight", textDecoration = c("italic", "bold"), valign = "center", halign = "center"))
-    if(ntests!=0) addStyle(wb = wb, sheet = 1, rows = rep(1, length((lly + 3):(lly + 3 + (X$test == "both")))), cols = (lly + 3):(lly + 3 + (X$test == "both")), style = createStyle(border = "LeftBottomRight", textDecoration = c("italic", "bold"), valign = "center", halign = "center"))
-    addStyle(wb = wb, sheet = 1, rows = c(2, 2), cols = c((lly + 2), length(col.names) + 1), style = createStyle(border = "BottomRight", textDecoration = c("italic", "bold"), valign = "center", halign = "center"))
-    addStyle(wb = wb, sheet = 1, rows = 1:2, cols = c(1, 1), style = createStyle(border = "RightBottom"))
-    addStyle(wb = wb, sheet = 1, rows = rep(2 + length(row.names), length(col.names) + 1), cols = 1:(length(col.names) + 1), style = createStyle(border = "Bottom", valign = "center", halign = "right"))
-    addStyle(wb = wb, sheet = 1, rows = 2 + length(row.names), cols = 1, style = createStyle(border = "RightBottom", valign = "center", halign = if((length(row.names) + 2) %in% rowlevels) "right" else "left", textDecoration = c("bold", "italic")))
-    addStyle(wb = wb, sheet = 1, rows = rep(2 + length(row.names), 4), cols = c(2, lly + 2, lly + 2 + ntests, length(col.names) + 1), style = createStyle(border = "RightBottom", valign = "center", halign = "right"))
-    
-    addStyle(wb = wb, sheet = 1, rows = 3:(length(row.names) + 1), cols = rep(length(col.names) + 1, length(3:(length(row.names) + 1))), style = createStyle(border = "Right", valign = "center", halign = "right"))
+    # styles
+    addStyle(wb = wb, sheet = 1, 
+             style = header_sty, 
+             rows = 1:2, cols = 1:(length(names_cols) + 1), 
+             gridExpand = TRUE, stack = TRUE)
+    addStyle(wb = wb, sheet = 1, 
+             style = variables_sty, 
+             rows = 2 + seq_along(names_rows), cols = 1, 
+             gridExpand = TRUE, stack = TRUE)
+    all_levels <- unlist(sapply(rhs_data, function(x){
+      if(is.factor(x)) return(levels(x))
+      NULL
+    }))
+    addStyle(wb = wb, sheet = 1, 
+             style = levels_sty, 
+             rows = 2 + seq_along(names_rows)[names_rows %in% all_levels], cols = 1, 
+             gridExpand = TRUE, stack = FALSE)
+    addStyle(wb = wb, sheet = 1, 
+             style = data_sty, 
+             rows = 2 + seq_along(names_rows), cols = 1 + seq_along(names_cols), 
+             gridExpand = TRUE, stack = TRUE)
+    addStyle(wb = wb, sheet = 1, 
+             style = createStyle(border = "Bottom"), 
+             rows = 2 + length(names_rows), cols = 1:(length(names_cols) + 1), 
+             gridExpand = TRUE, stack = TRUE)
+    addStyle(wb = wb, sheet = 1, 
+             style = bgcol_sty, 
+             rows = 2 + which(seq_along(names_rows)%%2 == 0), cols = 1:(length(names_cols) + 1), 
+             gridExpand = TRUE, stack = TRUE)
     
     setColWidths(wb, sheet = 1, cols = 1:(ncol(taula) + 1), widths = "auto", ignoreMergedCells = TRUE)
     saveWorkbook(wb, file, overwrite = TRUE)

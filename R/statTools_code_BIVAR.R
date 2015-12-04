@@ -1,7 +1,7 @@
 bivarRow <- function(x, ...) UseMethod("bivarRow", object = if(is.data.frame(x)) x[[1]] else x)
 
 bivarRow.default <- function(x, y, ...){
-  warning("Only factor and numeric classes are supported")
+  warning(paste0(typeof(x), " is not handled in bivarTable(), no output generated"))
   return(NULL)
 }
 
@@ -32,7 +32,7 @@ bivarRow.factor <- function(x, y = NULL, data = NULL,
   
   totals.n <- matrix(c("", inbra(tx, ifelse(is.na(px), "-", paste0(round(px, rounding), "%")))), ncol=1)
   rownames(totals.n) <- c(xname, levels(x))
-  colnames(totals.n) <- paste0("Totals", " (n = ", sum(!is.na(y)),"; ", round(sum(!is.na(y))/length(y)*100, rounding), "%)")
+  colnames(totals.n) <- paste0("All", " (n = ", sum(!is.na(y)),"; ", round(sum(!is.na(y))/length(y)*100, rounding), "%)")
   
   output <- totals.n
     
@@ -98,7 +98,7 @@ bivarRow.factor <- function(x, y = NULL, data = NULL,
         
         names(pmod)[i] <- names(fit.model)[i]
         pm <- as.matrix(c(pmod[i], rep("", llx)))
-        colnames(pm) <- paste(names(fit.model)[i], "p-value")
+        colnames(pm) <- paste(names(fit.model)[i], "drop1 p-value")
         output <- cbind(output, pm)
         
         if(!is.null(FUN.model[[names(fit.model)[i]]])){
@@ -109,14 +109,18 @@ bivarRow.factor <- function(x, y = NULL, data = NULL,
             sortida <- do.call(funcions[j], c(list(mod[[i]]), args.funcions[[funcions[j]]]))
             if(is.vector(sortida)) sortida <- t(as.matrix(sortida))
             if(nrow(output) - nrow(sortida) < 1){
-              # cutrada...
               sortida <- sortida[1:nrow(output), , drop = FALSE]
               auxmat <- NULL
             } else {
               auxmat <- matrix("", ncol = ncol(sortida), nrow = nrow(output) - nrow(sortida))
             }
             sortida <- rbind(sortida, auxmat)
-            colnames(sortida) <- paste0(funcions[j], 1:ncol(sortida), " ", names(fit.model)[i])
+            nom_j <- names(FUN.model[[names(fit.model)[i]]])[j]
+            if(!is.null(nom_j)){
+              colnames(sortida) <- paste0(nom_j, if(ncol(sortida) > 1) seq_along(sortida[1, ]) else NULL, " ", names(fit.model)[i])
+            } else {
+              colnames(sortida) <- paste0(funcions[j], 1:ncol(sortida), " ", names(fit.model)[i])
+            }
             funs.mat <- cbind(funs.mat, sortida)
           }
           output <- cbind(output, funs.mat)
@@ -153,7 +157,7 @@ bivarRow.numeric <- function(x, y = NULL, data = NULL,
   
   totals <- inbra(ifelse(is.na(mean(x, na.rm = T)), "-", round(mean(x, na.rm = T), rounding)),
                   ifelse(is.na(sd(x, na.rm = T)), "-", round(sd(x, na.rm = T), rounding)))
-  names(totals) <- paste0("Totals", " (n = ", sum(!is.na(y)),"; ", round(sum(!is.na(y))/length(y)*100, rounding), "%)")
+  names(totals) <- paste0("All", " (n = ", sum(!is.na(y)),"; ", round(sum(!is.na(y))/length(y)*100, rounding), "%)")
   output <- c(totals)
   
   if(!is.null(y)){
@@ -212,7 +216,7 @@ bivarRow.numeric <- function(x, y = NULL, data = NULL,
           pmod[names(fit.model)[i]] <- do.call(pround[[1]], c(list(if(length(levels(invar)) > 2) drop1(mod[[names(fit.model)[i]]], test = "Chi")[2, 5] else summary(mod[[names(fit.model)[i]]])$coef[2, 4]), pround[-1]))
         } else {warning("Factor with only one level")}
         output <- c(output, pmod[i])
-        names(output)[length(output)] <- paste(names(fit.model)[i], "p-value")
+        names(output)[length(output)] <- paste(names(fit.model)[i], "drop1 p-value")
         
         if(!is.null(FUN.model[[names(fit.model)[i]]])){
           funs.mat <- NULL
@@ -221,7 +225,12 @@ bivarRow.numeric <- function(x, y = NULL, data = NULL,
           for(j in 1:length(FUN.model[[names(fit.model)[i]]])){
             sortida <- do.call(funcions[j], c(list(mod[[i]]), args.funcions[[funcions[j]]]))
             sortida <- as.vector(sortida)
-            names(sortida) <- paste0(funcions[j], 1:length(sortida), " ", names(fit.model)[i])
+            nom_j <- names(FUN.model[[names(fit.model)[i]]])[j]
+            if(!is.null(nom_j)){
+              names(sortida) <- paste0(nom_j, if(length(sortida) > 1) seq_along(sortida) else NULL, " ", names(fit.model)[i])
+            } else {
+              names(sortida) <- paste0(funcions[j], 1:length(sortida), " ", names(fit.model)[i])
+            }
             funs.mat <- c(funs.mat, sortida)
           }
           output <- c(output, funs.mat)
@@ -236,42 +245,58 @@ bivarRow.numeric <- function(x, y = NULL, data = NULL,
   return(output)
 }
 
-#' bivarTable 
+#' Assessing differences in groups 
 #' 
-#' Creating a table with the results of assessing differences among groups.
+#' This function creates a table resulting from an analysis comparing two or more groups .
+#' 
+#' @param X A data frame with variables in the rows (for .default) or a formula with additive terms (. and - are allowed too) and with 0 or 1 variable in the LHS.
+#' LHS of the formula defines the grouping variable, and RHS where to assess differences (for .formula).
+#' @param y Grouping variable in the default method.
+#' @param data Data frame with the variables in \code{X}.
+#' @param margin For factors, percentages are calculated. If \code{margin = 1} row percentages sum 100\%, 
+#' if 2, column percentages sum 100\%. See \code{margin} from \code{prop.table}.
+#' @param rounding Decimal places for all numeric values in the table. P-values are rounded with another criterion.
+#' @param test One of "both", "parametric", "non-parametric" or "none". Defines the type of tests to perform in all variables in RHS.
+#' See Details section.
+#' @param condense.binary.factors Use only one single row for binary factors to avoid redundancy.
+#' @param drop.x Perform \code{factor(x)} before all computations to delete unused levels in RHS variables.            
+#' @param drop.y Perform \code{factor(y)} before all computations to delete unused levels the grouping variable.            
+#' @param fit.model A NAMED list with formulas for fitting models to each row. These formulas are passed to \code{update.formula}
+#' so \code{.} here refers to each RHS or LHS variable, depending on argument \code{output}. See Details.
+#' @param outcome If 1, RHS are understood as the dependent variables when fitting models. 
+#' If 2, LHS variable is understood as the dependent variable in each model fitted.
+#' @param FUN.model A NAMED list. Each element has to be named like one of the elements in \code{fit.model}.
+#' Each element in FUN.model will be a character vector with the names of functions to be executed in each model to return more particular outputs.
+#' If the vector is named, these are used as column names in the final table (See Examples). The first argument of the function
+#' has to be the model fitted. Other arguments can be changed in \code{...}. Examples of functions used for this are 
+#' nagelkerke(), adjNagelkerke(), getPval(), getBetaSd(), getORCI(), verticalgetPval(), verticalgetBetaSd(), verticalgetORCI(), GoF().
+#' @param ... Extra arguments for the functions in \code{FUN.model}. To change arguments from the functions, add a list argument named 
+#' as the model that the function is applied to, whose elements will be the lists with arguments to modify (passed to do.call), and the 
+#' name of each list of arguments the function those arguments belong to (See Examples).
+#'
+#' @details
+#' The grouping variable (LHS of the formula or y for .default) is set on the columns and the other variables (RHS of the formula or X data frame for .default).
+#' Variables are read from argument data. Default options for some arguments can be changed using options(argument = value).
+#' 
+#' The tests performed in each case are defined in options()$parametric.tests and options()$non.parametric.tests. Changing them, the tests
+#' performed will change, however, to get the p-value from the tests, the new tests must return a list with an element called p.value. 
+#' The default tests are:
+#' 
+#' Quantitative row variable vs binary grouping variable: t-test (t.test) or Mann-Whitney test (wilcox.test).
+#' 
+#' Quantitative row variable vs non-binary grouping variable: ANOVA (oneway.test) or Kruskal-Wallis test (kruskal.test).
+#' 
+#' Qualitative row variable: Chi-squared test (chisq.tes) or Fisher test (fisher.test).
+#' 
+#' For fitting models, first decide whether the grouping variable is the dependent variable or not. If it is, set ouput to 2 otherwise to 1,
+#' meaning that the dependent variable will be the one in the rows of the table (RHS of the formula). Formulas to fit the model must use the dot
+#' in the RHS of the formula to refer to the independent variable (either grouping variable or the one in the rows).
+#' when the response variable is a binary factor, a logistic regression model is fitted. When is a non-binary factor, the variable
+#' is converted to numeric preserving the order and a linear regression model is fitted. When the response is a quantitative variable linear models are
+#' fitted.
 #' 
 #' 
-#' @param X Fórmula només amb termes additius. Accepta AsIs class, punt (.) i restes.
-#' La part esquerra defineix les columnes (variable amb els grups), la dreta 
-#' les files (on veure diferències entre grups).
-#' @param data D'on llegir les dades per interpretar les fórmules.
-#' @param margin Valors 1 o 2. Perfils fila o columna a les taules de contingència, 
-#' respectivament. 
-#' @param rounding Nombre de decimals a tenir en compte (els p-valors s'arrodoneixen amb un 
-#' altre criteri).
-#' @param test One of "both", "parametric", "non-parametric" or "none". Si volem que fagi uns 
-#' testos predeterminats en concret (veure options()$parametric.tests i 
-#' options()$non.parametric.tests).
-#' @param condense.binary.factors Si transformar en una sola línia les variables binàries.
-#' @param drop.x Refactoritzar les variables fila si són factors per treure nivells sense observacions.            
-#' @param drop.y Refactoritzar la variable columna (grups) per treure nivells sense observacions. 
-#' @param fit.model Llista amb noms de les fórmules a partir de les quals ajustar un model glm o lm
-#' segons s'escaigui. L'ús del punt (.) s'utilitza per referir-se de forma general 
-#' a la variable fila o columna sense haver d'especificar-ne el nom (veure update.formula).
-#' @param outcome Valors 1 o 2, segons si pels models la variable considerada outcome seran les 
-#' que estan a les files o a les columnes, respectivament. 
-#' @param FUN.model Funcions extres que s'aplicaran als models, els outputs de les quals s'afegiran 
-#' com a noves columnes a la taula resultant. El primer paràmetre de les quals 
-#' ha de ser el model. S'especifica com una llista on cada element s'anomena com un
-#' dels models especificats a fit.model i serà un vector amb els noms de les funcions
-#' (entrats com a string) a aplicar en cadascun dels respectius models. Funcions 
-#' preparades: nagelkerke(), adjNagelkerke(), getPval(), getBetaSd(), getORCI(),
-#' verticalgetPval(), verticalgetBetaSd(), verticalgetORCI(), GoF().
-#' @param ... Arguments extres per les funcions del paràmetre FUN.model. Per a especificar els
-#' arguments extres d'una funció que s'aplica a un model, s'afegeix dintre dels ...
-#' un  argument amb el nom del model corresponent, i que serà una llista on cada element
-#' tingui per nom la funció de la qual es volen canviar els paràmetres, i contingui una 
-#' altra llista amb els paràmetres modificats (tipus el paràmetre args de do.call()).
+#'
 #'
 #' @return 
 #' A list with class bivarTable, where the first argument is the table generated (a matrix) and the other arguments
@@ -295,27 +320,24 @@ bivarRow.numeric <- function(x, y = NULL, data = NULL,
 #'                   fit.model = list(simple = ~ .,
 #'                                    adj = ~ . + Sepal.Length), 
 #'                   FUN.model = list(simple = c("getPval"), 
-#'                                    adj = c("getORCI", "getPval")),
+#'                                    adj = c("OR (95% CI)" = "getORCI", 
+#'                                            "p-value" = "getPval")),
 #'                   adj = list(getPval = list(vars = 4), 
 #'                              getORCI = list(vars = 4)))
 #' bvt
-#' bvt <- bivarTable(X = I(Sepal.Width>3) ~ . - Sepal.Length,
-#'                   data = iris, 
-#'                   margin = 2, 
-#'                   rounding = 3,
-#'                   test = "both", 
-#'                   condense.binary.factors = FALSE, 
-#'                   drop.x = TRUE, 
-#'                   drop.y = TRUE, 
-#'                   fit.model = list(simple = ~ ., 
-#'                                    adj = ~ . + Sepal.Length), 
-#'                   outcome = 2, 
-#'                   FUN.model = list(simple = c("getPval"), 
-#'                                    adj = c("verticalgetORCI", 
-#'                                            "verticalgetPval")))
+#' bvt <- bivarTable(X = I(Sepal.Width>3) ~ . - Sepal.Length, data = iris,          ## STRUCTURE
+#'                   rounding = 3, condense.binary.factors = FALSE,                 ## OPTIONS
+#'                   drop.x = TRUE, drop.y = TRUE, margin = 2,                      ## OPTIONS
+#'                   test = "both",                                                 ## TESTS
+#'                   fit.model = list(simple = ~ .,                                 ## FIT MODEL WITH NO COVARIATES
+#'                                    adj = ~ . + Sepal.Length),                    ## FIT ADJUSTED MODEL
+#'                   outcome = 2,                                                   ## LHS AS DEPENDENT VARIABLE (COLUMNS)
+#'                   FUN.model = list(simple = c("p-value" = "getPval"),            ## GET A P-VALUE FROM THE FIRST MODEL
+#'                                    adj = c("OR (95% CI)" = "verticalgetORCI",    ## GET ALL OR's FROM THE 2nd MODEL
+#'                                            "p-value" = "verticalgetPval")))      ## GET ALL P-VALUES FROM THE 2nd MODEL
 #' bvt
 #' \dontrun{
-#' export(bvt)
+#' export(bvt)                                                                      ## OPEN bvt IN EXCEL
 #' }
 #' 
 #' @seealso \code{\link{export}}
@@ -323,16 +345,16 @@ bivarRow.numeric <- function(x, y = NULL, data = NULL,
 bivarTable <- function(X, ...) UseMethod("bivarTable")
 
 #' @export
-#' @describeIn bivarTable Calling separately a data frame with the variables in the rows and the grouping variable.
+#' @describeIn bivarTable Default method for bivarTable
 bivarTable.default <- function(X, 
                                y = NULL, 
                                data = NULL,
                                margin = getOption("margin"),
                                rounding = getOption("rounding"),
-                               test = c("none", "parametric", "non-parametric", "both"),
                                condense.binary.factors = getOption("condense.binary.factors"),
                                drop.x = getOption("drop.x"), 
                                drop.y = getOption("drop.y"),
+                               test = c("none", "parametric", "non-parametric", "both"),
                                fit.model = NULL,
                                outcome = getOption("outcome"),
                                FUN.model = NULL, ...){
@@ -383,15 +405,15 @@ bivarTable.default <- function(X,
 
 
 #' @export
-#' @describeIn bivarTable Calling bivarTable using a formula.
+#' @describeIn bivarTable Formula method for bivarTable
 bivarTable.formula <- function(X, 
                                data = NULL,
                                margin = getOption("margin"),
                                rounding = getOption("rounding"),
-                               test = c("none", "parametric", "non-parametric", "both"),
                                condense.binary.factors = getOption("condense.binary.factors"),
                                drop.x = getOption("drop.x"), 
                                drop.y = getOption("drop.y"),
+                               test = c("none", "parametric", "non-parametric", "both"),
                                fit.model = NULL,
                                outcome = getOption("outcome"),
                                FUN.model = NULL, ...){
@@ -519,7 +541,7 @@ export.bivarTable <- function(X,
   } else if(type == "xlsx"){
     
     # add linebreaks in some cols
-    names_cols <- sapply(strsplit(split = " \\(", names_cols), paste0, collapse = "\n(")
+    names_cols <- sapply(strsplit(split = " \\(n = ", names_cols), paste0, collapse = "\n(n = ")
     
     #create wb
     wb <- createWorkbook()

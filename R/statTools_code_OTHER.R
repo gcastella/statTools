@@ -380,22 +380,6 @@ descomp <- function(x, get.all = FALSE, rev = FALSE, sum = x > 3) {
   return(out)
 }
 
-# compareLevels <- function(model, linfct, ...){
-#   require("multcomp")
-#   groups <- model$model[[2]]
-#   comp <- combn(levels(groups), 2, FUN = paste0, collapse = ":")
-#   if(missing(linfct)){
-#     compMAT <- t(combn(seq_along(levels(groups)), 2, FUN = function(x){
-#       vect <- numeric(length(levels(groups)))
-#       vect[x] <- c(1, -1)
-#       vect
-#     }))
-#     rownames(compMAT) <- comp
-#     colnames(compMAT) <- levels(groups)
-#   }
-#   glht(model, linfct = compMAT)
-# }
-
 #' @export
 survTable <- function(formula, data, when = c(1,2,5)){
   mcox <- coxph(formula = formula, data = data)
@@ -446,9 +430,10 @@ toNumeric <- function(data, select){
   return(data)
 }
 
+#' @export
 descr <- function(x, ...) UseMethod("descr")
 descr.default <- function(x, y, ...){
-  message("Unhandled class for", deparse(substitute(x)))
+  message("Unhandled class for ", deparse(substitute(x)))
   return("-")
 }
 descr.numeric <- function(x, y = NULL, rounding = getOption("rounding"), show.quantiles = NULL){
@@ -489,5 +474,48 @@ descr.numeric <- function(x, y = NULL, rounding = getOption("rounding"), show.qu
   t(out)
 }
 
-descr.factor <- function(x, y = NULL, rounding = getOption("rounding")){
+descr.factor <- function(x, y = NULL, rounding = getOption("rounding"), margin = 2){
+  
+  freqs <- as.vector(table(x))
+  percents <- as.vector(prop.table(table(x)) * 100)
+  out <- as.matrix(inbra(freqs, percents, add = "%"))
+
+  if(!is.null(y)){
+    freqs <- table(x, y)
+    n_row <- nrow(freqs) 
+    if(length(margin) != 2){
+      percents <- prop.table(table(x, y), margin = margin) * 100
+      df <- data.frame(as.vector(freqs), as.vector(percents))
+    } else {
+      percents1 <- prop.table(table(x, y), margin = margin[1]) * 100
+      percents2 <- prop.table(table(x, y), margin = margin[2]) * 100
+      df <- data.frame(as.vector(freqs), as.vector(percents1), as.vector(percents2))
+    }
+    
+    out <- matrix(inbra(df, add = "%", between = ", "), nrow = n_row)
+  }
+  out
 }
+
+
+alt_bind <- function(..., margin = 2, sequence = NULL){
+  
+}
+
+
+
+# compareLevels <- function(model, linfct, ...){
+#   require("multcomp")
+#   groups <- model$model[[2]]
+#   comp <- combn(levels(groups), 2, FUN = paste0, collapse = ":")
+#   if(missing(linfct)){
+#     compMAT <- t(combn(seq_along(levels(groups)), 2, FUN = function(x){
+#       vect <- numeric(length(levels(groups)))
+#       vect[x] <- c(1, -1)
+#       vect
+#     }))
+#     rownames(compMAT) <- comp
+#     colnames(compMAT) <- levels(groups)
+#   }
+#   glht(model, linfct = compMAT)
+# }

@@ -4,17 +4,17 @@
 \alias{inbra}
 \title{Paste objects between brackets}
 \usage{
-inbra(before = NULL, ..., between = "-", add = NULL,
+inbra(before, ..., between = "-", add = "",
   rounding = getOption("rounding"))
 }
 \arguments{
-\item{before}{Defaults to NULL. Vector with the values written before the bracket starts. It can also be a data frame (see Details).}
+\item{before}{Vector with the values written before the bracket starts. It can also be a data frame or matrix (see Details).}
 
 \item{...}{Other vectors to be displayed between brackets.}
 
-\item{between}{Defaults to "-". String to separate values inside the brackets.}
+\item{between}{Defaults to "-". Character vector with the strings to separate values inside the brackets. If it has length 1, it is replicated for all elements.}
 
-\item{add}{Defaults to NULL. A vector of the strings to add in every term inside the brackets. If it has length 1, it is replicated for all elements.}
+\item{add}{Defaults to \code{""}. A character vector with strings to add after every value inside the brackets. If it has length 1, it is replicated for all elements.}
 
 \item{rounding}{Defaults to getOption("rounding"). Number of decimals used for rounding. See \code{digits} from \code{\link[base]{round}}.}
 }
@@ -22,7 +22,7 @@ inbra(before = NULL, ..., between = "-", add = NULL,
 Returns a vector of strings with the values before and between the brackets. Has an attribute named \code{data.frame} with the values used.
 }
 \description{
-After the first element, puts everything sorrounded by brackets.
+The first element is placed outside brackets and the rest inside. In de form of \code{before (inside1, inside2, ...)}
 }
 \details{
 When \code{before} is a data frame, it returns a vector of strings where the first column from the data frame is outside the brackets
@@ -38,6 +38,13 @@ inbra(means, mins, maxs, between = " to ")
 freqs <- as.numeric(table(iris$Species))
 percents <- as.numeric(100*prop.table(table(iris$Species)))
 inbra(freqs, percents, rounding = 2, add = "\%")
+
+# with a data frame:
+values <- inbra(iris[c(5, 1:4)], between = c("; ", " - ", " - "), add = "cm")
+values
+
+# data arguments are still stored in
+attributes(values)$data
 
 }
 \seealso{

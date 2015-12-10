@@ -92,17 +92,17 @@ repath <- function(writecb = TRUE) {
 
 #' Paste objects between brackets
 #' 
-#' After the first element, puts everything sorrounded by brackets.
+#' The first element is placed outside brackets and the rest inside. In de form of \code{before (inside1, inside2, ...)}
 #' 
 #' @details
 #' When \code{before} is a data frame, it returns a vector of strings where the first column from the data frame is outside the brackets
 #' and all the others inside separated by the symbol given in \code{between}.
 #' When \code{before} is a vector and \code{...} are also vectors of the same length, a data frame is created and the same that above is performed.
 #' 
-#' @param before Defaults to NULL. Vector with the values written before the bracket starts. It can also be a data frame (see Details).
+#' @param before Vector with the values written before the bracket starts. It can also be a data frame or matrix (see Details).
 #' @param ... Other vectors to be displayed between brackets.
-#' @param between Defaults to "-". String to separate values inside the brackets. 
-#' @param add Defaults to NULL. A vector of the strings to add in every term inside the brackets. If it has length 1, it is replicated for all elements.
+#' @param between Defaults to "-". Character vector with the strings to separate values inside the brackets. If it has length 1, it is replicated for all elements.
+#' @param add Defaults to \code{""}. A character vector with strings to add after every value inside the brackets. If it has length 1, it is replicated for all elements.
 #' @param rounding Defaults to getOption("rounding"). Number of decimals used for rounding. See \code{digits} from \code{\link[base]{round}}.
 #' 
 #' @return Returns a vector of strings with the values before and between the brackets. Has an attribute named \code{data.frame} with the values used.
@@ -117,26 +117,49 @@ repath <- function(writecb = TRUE) {
 #' percents <- as.numeric(100*prop.table(table(iris$Species)))
 #' inbra(freqs, percents, rounding = 2, add = "%")
 #' 
+#' # with a data frame:
+#' values <- inbra(iris[c(5, 1:4)], between = c("; ", " - ", " - "), add = "cm")
+#' values
+#' 
+#' # data arguments are still stored in
+#' attributes(values)$data
+#' 
 #' @seealso \code{\link{bivarTable}}
 #' @export
-inbra <- function(before = NULL, ..., between = "-", add = NULL, rounding = getOption("rounding")){
+inbra <- function(before, ..., between = "-", add = "", rounding = getOption("rounding")){
+  
+  if(is.null(before) | missing(before)) stop("before argument must be set and non-NULL")
   extra <- list(...)
-  before2 <- before
-  if(!is.null(before)) before <- as.data.frame(before)
+  before_class <- class(before)
+  before <- as.data.frame(before)
 
-  if(!(is.data.frame(before2) | is.matrix(before2)) & length(extra)>0){
+  if(!inherits(before_class, what = c("data.frame", "matrix")) & length(extra) > 0){
     for(i in 1:length(extra)){
-      before <- cbind(before, extra[[i]])
+      before[[i + 1]] <- extra[[i]]
     }
+    colnames(before)[-1] <- paste0("inside", 1:length(extra))
   }
-  dins <- paste0(if(is.numeric(before[, 2])) round(before[, 2], rounding) else before[, 2], add[1])
-  if(ncol(before) > 2){
-    for(i in 3:ncol(before)){
-      dins <- paste(dins, paste0(if(is.numeric(before[, i])) round(before[, i], rounding) else before[, i], if(length(add) > 1) add[i - 1] else add), sep = between)
-    }
+  
+  before2 <- before
+  before <- as.data.frame(lapply(before, FUN = function(x){
+    if(is.numeric(x)) return(round(x, rounding)) else return(x)
+  }))
+  
+  if(length(add) == 1) add <- rep(add, ncol(before) - 1)
+  if(ncol(before) > 2 & length(between) == 1) between <- rep(between, ncol(before) - 2)
+  if(ncol(before) > 1){
+    inside <- apply(before, 1, FUN = function(x){
+      dins <- paste0(x[2], add[1])
+      if(length(x[-(1:2)]) > 0){
+        dins <- paste0(dins, paste0(between, x[-(1:2)], add[-1], collapse = ""))
+      }
+      dins
+    })
+    out <- paste0(before[, 1], " (", inside, ")")
+  } else {
+    out <- before[, 1]
   }
-  out <- paste(if(is.numeric(before[, 1])) round(before[, 1], rounding) else before[, 1], " (", dins,")", sep = "")
-  attr(out, "data.frame") <- before
+  attr(out, "data") <- before2
   return(out)
 }
 

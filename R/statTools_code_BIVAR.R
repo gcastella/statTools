@@ -8,13 +8,17 @@ bivarRow.default <- function(x, y, ...){
 bivarRow.factor <- function(x, y = NULL, data = NULL,
                             margin = getOption("margin"),
                             rounding = getOption("rounding"),
-                            test = c("none", "parametric", "non-parametric", "both"),
                             condense.binary.factors = getOption("condense.binary.factors"),
                             drop.x = getOption("drop.x"), 
                             drop.y = getOption("drop.y"),
-                            fit.model = NULL, 
+                            test = c("none", "parametric", "non-parametric", "both"),
                             outcome = getOption("outcome"),
+                            pvalues.model = getOption("pvalues.model"),
+                            fit.model = NULL, 
                             FUN.model = NULL, ...){
+  
+  dots <- list(...)
+  output <- list()
   
   xname <- deparse(substitute(x))
   if(is.data.frame(x)){
@@ -26,49 +30,50 @@ bivarRow.factor <- function(x, y = NULL, data = NULL,
   lly <- length(levels(y))
   llx <- length(levels(x))
   
-  tx <- as.vector(table(x))
-  px <- as.vector(prop.table(table(x))*100)
-  dots <- list(...)
-  
-  totals.n <- matrix(c("", inbra(tx, ifelse(is.na(px), "-", paste0(round(px, rounding), "%")))), ncol=1)
-  rownames(totals.n) <- c(xname, levels(x))
-  colnames(totals.n) <- paste0("All", " (n = ", sum(!is.na(y)),"; ", round(sum(!is.na(y))/length(y)*100, rounding), "%)")
-  
-  output <- totals.n
+  all_desc <- rbind("", descr_var(x = x, rounding = rounding, ...))
+  rownames(all_desc) <- c(xname, levels(x))
+  colnames(all_desc) <- paste0("All", 
+                                 " (n = ", sum(!is.na(y)),
+                                 "; ", 
+                                 round(sum(!is.na(y)) / length(y) * 100, rounding), 
+                                 "%)")
+  output$all <- all_desc
     
   if(!is.null(y)){
-    n.ij <- table(x, y)
-    percent.ij <- round(prop.table(n.ij, margin)*100, rounding)
-    desc.ij <- rbind(rep("", lly), matrix(paste(n.ij, paste0("(", ifelse(is.na(percent.ij), "-", paste0(round(percent.ij, rounding), "%")),")")), nrow = llx))
-    perc.desc <- round(prop.table(table(y)) * 100, rounding)
-    colnames(desc.ij) <- paste0(levels(y), " (n = ", table(y),"; ", perc.desc, "%)")
-    output <- cbind(output, desc.ij)
+    
+    bygroup_desc <- rbind("", descr_var(x = x, y = y, rounding = rounding, margin = margin, ...))
+    perc_desc <- round(prop.table(table(y)) * 100, rounding)
+    colnames(bygroup_desc) <- paste0(levels(y), " (n = ", table(y),"; ", perc_desc, "%)")
+    output$bygroup_desc <- bygroup_desc
     
     test <- match.arg(test)
     nonparam <- getOption("non.parametric.tests")
     param <- getOption("parametric.tests")
-    test.pvals <- tryCatch(switch(test, 
-                                  "non-parametric" = c("non-parametric" = do.call(nonparam$factor[[1]], c(list(table(x, y)), nonparam$factor[-1]))$p.value),
-                                  "parametric"     = c("parametric p-value" = do.call(param$factor[[1]], c(list(table(x, y)), param$factor[-1]))$p.value),
-                                  "both"           = c("non-parametric p-value" = do.call(nonparam$factor[[1]], c(list(table(x, y)), nonparam$factor[-1]))$p.value, 
-                                                      "parametric p-value" = do.call(param$factor[[1]], c(list(table(x, y)), param$factor[-1]))$p.value),
-                                  "none"           = NA), 
-                          error = function(e){
-                            warning(paste0("Error for variable ", xname, ": ", as.character(e)))
-                            if(test == "both"){
-                              return(c(NA, NA))
-                            } else {
-                              return(NA)
-                            }
-                          }
+    test.pvals <- tryCatch(
+      switch(test, 
+        "non-parametric" = c("non-parametric" = do.call(nonparam$factor[[1]], c(list(table(x, y)), nonparam$factor[-1]))$p.value),
+        "parametric"     = c("parametric p-value" = do.call(param$factor[[1]], c(list(table(x, y)), param$factor[-1]))$p.value),
+        "both"           = c("non-parametric p-value" = do.call(nonparam$factor[[1]], c(list(table(x, y)), nonparam$factor[-1]))$p.value, 
+                            "parametric p-value" = do.call(param$factor[[1]], c(list(table(x, y)), param$factor[-1]))$p.value),
+        "none"           = NA
+      ), 
+      error = function(e){
+        warning(paste0("Error for variable ", xname, ": ", as.character(e)))
+        if(test == "both"){
+          return(c(NA, NA))
+        } else {
+          return(NA)
+        }
+      }
     )
+    
     pround <- getOption("p.value.rounding")
     test.pvals <- do.call(pround[[1]], c(list(test.pvals), pround[-1]))
-    test.pvalsmat <- matrix(rep("", length(test.pvals)*nrow(output)), ncol = length(test.pvals), nrow = nrow(output))
+    test.pvalsmat <- matrix(rep("", times = length(test.pvals) * nrow(output[[1]])), ncol = length(test.pvals), nrow = nrow(output[[1]]))
     test.pvalsmat[1,] <- test.pvals
     colnames(test.pvalsmat) <- names(test.pvals)
     if(test == "none") test.pvalsmat <- NULL
-    output <- cbind(output, test.pvalsmat)
+    output$tests <- test.pvalsmat
     
     if(!is.null(fit.model)){ 
       pmod <- NULL
@@ -85,34 +90,40 @@ bivarRow.factor <- function(x, y = NULL, data = NULL,
       llinvar <- length(levels(invar))
       lloutvar <- length(levels(outvar))
       
-      for(i in 1:length(fit.model)){
+      for(i in seq_along(fit.model)){
         if(lloutvar == 2){
           mod[[names(fit.model)[i]]] <- glm(outvar ~ invar, family = binomial, data = data)
-          mod[[names(fit.model)[i]]] <- update(mod[[names(fit.model)[i]]], fit.model[[names(fit.model)[i]]])
+          mod[[names(fit.model)[i]]] <- update(mod[[names(fit.model)[i]]], 
+                                               fit.model[[names(fit.model)[i]]])
           pmod[names(fit.model)[i]] <- do.call(pround[[1]], c(list(if(llinvar > 2) drop1(mod[[names(fit.model)[i]]], test = "Chi")[2, 5] else summary(mod[[names(fit.model)[i]]])$coef[2, 4]), pround[-1]))
         } else if(lloutvar == 0){
           mod[[names(fit.model)[i]]] <- lm(outvar ~ invar, data = data)
-          mod[[names(fit.model)[i]]] <- update(mod[[names(fit.model)[i]]], fit.model[[names(fit.model)[i]]])
+          mod[[names(fit.model)[i]]] <- update(mod[[names(fit.model)[i]]], 
+                                               fit.model[[names(fit.model)[i]]])
           pmod[names(fit.model)[i]] <- do.call(pround[[1]], c(list(if(llinvar > 2) drop1(mod[[names(fit.model)[i]]], test = "Chi")[2, 5] else summary(mod[[names(fit.model)[i]]])$coef[2, 4]), pround[-1]))
-        } else {warning(paste(deparse(substitute(x)), "has only one level"))}
+        } else {
+          warning(paste(deparse(substitute(x)), "has only one level"))
+        }
         
-        names(pmod)[i] <- names(fit.model)[i]
-        pm <- as.matrix(c(pmod[i], rep("", llx)))
-        colnames(pm) <- paste(names(fit.model)[i], "drop1 p-value")
-        output <- cbind(output, pm)
+        if(pvalues.model){
+          names(pmod)[i] <- names(fit.model)[i]
+          pm <- as.matrix(c(pmod[i], rep("", llx)))
+          colnames(pm) <- paste(names(fit.model)[i], "drop1 p-value")
+          output$pval_models <- pm
+        }
         
         if(!is.null(FUN.model[[names(fit.model)[i]]])){
           funs.mat <- NULL
           funcions <- FUN.model[[names(fit.model)[i]]]
           args.funcions <- dots[[names(fit.model)[i]]]
-          for(j in 1:length(FUN.model[[names(fit.model)[i]]])){
+          for(j in seq_along(FUN.model[[names(fit.model)[i]]])){
             sortida <- do.call(funcions[j], c(list(mod[[i]]), args.funcions[[funcions[j]]]))
             if(is.vector(sortida)) sortida <- t(as.matrix(sortida))
-            if(nrow(output) - nrow(sortida) < 1){
-              sortida <- sortida[1:nrow(output), , drop = FALSE]
+            if(nrow(output[[1]]) - nrow(sortida) < 1){
+              sortida <- sortida[1:nrow(output[[1]]), , drop = FALSE]
               auxmat <- NULL
             } else {
-              auxmat <- matrix("", ncol = ncol(sortida), nrow = nrow(output) - nrow(sortida))
+              auxmat <- matrix("", ncol = ncol(sortida), nrow = nrow(output[[1]]) - nrow(sortida))
             }
             sortida <- rbind(sortida, auxmat)
             nom_j <- names(FUN.model[[names(fit.model)[i]]])[j]
@@ -123,28 +134,32 @@ bivarRow.factor <- function(x, y = NULL, data = NULL,
             }
             funs.mat <- cbind(funs.mat, sortida)
           }
-          output <- cbind(output, funs.mat)
+          output$funs_model <- funs.mat
         }
       }
     }
   }
-  if(condense.binary.factors & llx==2){
+  output <- do.call(cbind, output)
+  if(condense.binary.factors & llx == 2){
     rownames(output)[1] <- inbra(rownames(output)[1], rownames(output)[3])
     output[1, 1:(lly + 1)] <- output[3, 1:(lly + 1)]
     output <- output[1, , drop = FALSE]
   }
   return(output)
 }
-
 bivarRow.numeric <- function(x, y = NULL, data = NULL,
                              margin = getOption("margin"),
                              rounding = getOption("rounding"),
-                             test = c("none", "parametric", "non-parametric", "both"),
                              condense.binary.factors = getOption("condense.binary.factors"),
                              drop.y = getOption("drop.y"),
-                             fit.model = NULL, 
+                             test = c("none", "parametric", "non-parametric", "both"),
                              outcome = getOption("outcome"),
+                             pvalues.model = getOption("pvalues.model"),
+                             fit.model = NULL, 
                              FUN.model = NULL, ...){
+  
+  dots <- list(...)
+  output <- list()
   
   xname <- deparse(substitute(x))
   if(is.data.frame(x)){
@@ -153,45 +168,48 @@ bivarRow.numeric <- function(x, y = NULL, data = NULL,
   } 
   if(drop.y & !is.null(y)) y <- factor(y)
   lly <- length(levels(y))
-  dots <- list(...)
   
-  totals <- inbra(ifelse(is.na(mean(x, na.rm = T)), "-", round(mean(x, na.rm = T), rounding)),
-                  ifelse(is.na(sd(x, na.rm = T)), "-", round(sd(x, na.rm = T), rounding)))
-  names(totals) <- paste0("All", " (n = ", sum(!is.na(y)),"; ", round(sum(!is.na(y))/length(y)*100, rounding), "%)")
-  output <- c(totals)
+  all_desc <- descr_var(x = x, rounding = rounding, ...)
+  rownames(all_desc) <- xname
+  colnames(all_desc) <- paste0("All", 
+                               " (n = ", sum(!is.na(y)),
+                               "; ", 
+                               round(sum(!is.na(y)) / length(y) * 100, rounding), 
+                               "%)")
+  output$all <- all_desc
   
   if(!is.null(y)){
-    mitjanes <- ifelse(is.na(tapply(x, y, mean, na.rm = T)), "-", round(tapply(x, y, mean, na.rm = T), rounding))
-    desvsd <- ifelse(is.na(tapply(x, y, sd, na.rm = T)), "-", round(tapply(x, y, sd, na.rm = T), rounding))
-    desc <- inbra(mitjanes, desvsd)
-    perc.desc <- round(prop.table(table(y)) * 100, rounding)
-    names(desc) <- paste0(levels(y), " (n = ", table(y),"; ", perc.desc, "%)")
-    output <- c(output, desc)
+    
+    bygroup_desc <- descr_var(x = x, y = y, rounding = rounding, ...)
+    perc_desc <- round(prop.table(table(y)) * 100, rounding)
+    colnames(bygroup_desc) <- paste0(levels(y), " (n = ", table(y),"; ", perc_desc, "%)")
+    output$bygroup_desc <- bygroup_desc
     
     test <- match.arg(test)
     nonparam <- getOption("non.parametric.tests")
     param <- getOption("parametric.tests")
     
-    if(lly==2) tt <- "numeric.binary" else tt <- "numeric.multi"
-    test.pvals <- tryCatch(switch( test, 
-                                   "non-parametric" = c("non-parametric" = do.call(nonparam[[tt]][[1]], c(list(x ~ y), nonparam[[tt]][-1]))$p.value),
-                                   "parametric"     = c("parametric p-value" = do.call(param[[tt]][[1]], c(list(x ~ y), param[[tt]][-1]))$p.value),
-                                   "both"           = c("non-parametric p-value" = do.call(nonparam[[tt]][[1]], c(list(x ~ y), nonparam[[tt]][-1]))$p.value, 
-                                                        "parametric p-value" = do.call(param[[tt]][[1]], c(list(x ~ y), param[[tt]][-1]))$p.value),
-                                   "none"           = NA), 
-                           error = function(e){
-                             warning(paste0("Error for variable ", xname, ": ", as.character(e)))
-                             if(test == "both"){
-                               return(c(NA, NA))
-                             } else {
-                               return(NA)
-                             }
-                           }
+    if(lly == 2) tt <- "numeric.binary" else tt <- "numeric.multi"
+    test.pvals <- tryCatch(
+      switch(test, 
+        "non-parametric" =  c("non-parametric" = do.call(nonparam[[tt]][[1]], c(list(x ~ y), nonparam[[tt]][-1]))$p.value),
+        "parametric"     =  c("parametric p-value" = do.call(param[[tt]][[1]], c(list(x ~ y), param[[tt]][-1]))$p.value),
+        "both"           =  c("non-parametric p-value" = do.call(nonparam[[tt]][[1]], c(list(x ~ y), nonparam[[tt]][-1]))$p.value, 
+                              "parametric p-value" = do.call(param[[tt]][[1]], c(list(x ~ y), param[[tt]][-1]))$p.value),
+        "none"           =  NA), 
+      error = function(e){
+        warning(paste0("Error for variable ", xname, ": ", as.character(e)))
+        if(test == "both"){
+         return(c(NA, NA))
+        } else {
+         return(NA)
+        }
+      }
     )
     pround <- getOption("p.value.rounding")
     test.pvals <- do.call(pround[[1]], c(list(test.pvals), pround[-1]))
     if(test == "none") test.pvals <- NULL
-    output <- c(output, test.pvals)
+    output$tests <- t(test.pvals)
     
     if(!is.null(fit.model)){ 
       pmod <- NULL
@@ -205,18 +223,25 @@ bivarRow.numeric <- function(x, y = NULL, data = NULL,
         invar <- x
       }
       
-      for(i in 1:length(fit.model)){
+      for(i in seq_along(fit.model)){
         if(length(levels(outvar)) == 2){
           mod[[names(fit.model)[i]]] <- glm(outvar ~ invar, family = binomial, data = data)
-          mod[[names(fit.model)[i]]] <- update(mod[[names(fit.model)[i]]], fit.model[[names(fit.model)[i]]])
+          mod[[names(fit.model)[i]]] <- update(mod[[names(fit.model)[i]]], 
+                                               fit.model[[names(fit.model)[i]]])
           pmod[names(fit.model)[i]] <- do.call(pround[[1]], c(list(if(length(levels(invar)) > 2) drop1(mod[[names(fit.model)[i]]], test = "Chi")[2, 5] else summary(mod[[names(fit.model)[i]]])$coef[2, 4]), pround[-1]))
         } else if(length(levels(outvar)) == 0){
           mod[[names(fit.model)[i]]] <- lm(outvar ~ invar, data = data)
-          mod[[names(fit.model)[i]]] <- update(mod[[names(fit.model)[i]]], fit.model[[names(fit.model)[i]]])
+          mod[[names(fit.model)[i]]] <- update(mod[[names(fit.model)[i]]], 
+                                               fit.model[[names(fit.model)[i]]])
           pmod[names(fit.model)[i]] <- do.call(pround[[1]], c(list(if(length(levels(invar)) > 2) drop1(mod[[names(fit.model)[i]]], test = "Chi")[2, 5] else summary(mod[[names(fit.model)[i]]])$coef[2, 4]), pround[-1]))
-        } else {warning("Factor with only one level")}
-        output <- c(output, pmod[i])
-        names(output)[length(output)] <- paste(names(fit.model)[i], "drop1 p-value")
+        } else {
+          warning("Factor with only one level")
+        }
+        
+        if(pvalues.model){
+          output$pvalue_model <- t(pmod[i])
+          colnames(output$pvalue_model) <- paste(names(fit.model)[i], "drop1 p-value")
+        }
         
         if(!is.null(FUN.model[[names(fit.model)[i]]])){
           funs.mat <- NULL
@@ -233,15 +258,13 @@ bivarRow.numeric <- function(x, y = NULL, data = NULL,
             }
             funs.mat <- c(funs.mat, sortida)
           }
-          output <- c(output, funs.mat)
+          output$funs_mat <- t(funs.mat)
         }
       }
     }
   }
-  cols <- names(output)
-  output <- matrix(output, nrow=1)
-  colnames(output) <- cols
-  rownames(output) <- xname
+  
+  output <- do.call(cbind, output)
   return(output)
 }
 
@@ -256,6 +279,7 @@ bivarRow.numeric <- function(x, y = NULL, data = NULL,
 #' @param margin For factors, percentages are calculated. If \code{margin = 1} row percentages sum 100\%, 
 #' if 2, column percentages sum 100\%. See \code{margin} from \code{prop.table}.
 #' @param rounding Decimal places for all numeric values in the table. P-values are rounded with another criterion.
+#' @param pvalue.model Logical. If TRUE a p-value from the drop1 methods are provided for each model fitted.
 #' @param test One of "both", "parametric", "non-parametric" or "none". Defines the type of tests to perform in all variables in RHS.
 #' See Details section.
 #' @param condense.binary.factors Use only one single row for binary factors to avoid redundancy.
@@ -270,7 +294,7 @@ bivarRow.numeric <- function(x, y = NULL, data = NULL,
 #' If the vector is named, these are used as column names in the final table (See Examples). The first argument of the function
 #' has to be the model fitted. Other arguments can be changed in \code{...}. Examples of functions used for this are 
 #' nagelkerke(), adjNagelkerke(), getPval(), getBetaSd(), getORCI(), verticalgetPval(), verticalgetBetaSd(), verticalgetORCI(), GoF().
-#' @param ... Extra arguments for the functions in \code{FUN.model}. To change arguments from the functions, add a list argument named 
+#' @param ... Extra arguments for the functions in \code{FUN.model} or the descriptive functions \code{descr_var()}. To change arguments from the functions, add a list argument named 
 #' as the model that the function is applied to, whose elements will be the lists with arguments to modify (passed to do.call), and the 
 #' name of each list of arguments the function those arguments belong to (See Examples).
 #'
@@ -327,14 +351,16 @@ bivarRow.numeric <- function(x, y = NULL, data = NULL,
 #' bvt
 #' bvt <- bivarTable(X = I(Sepal.Width>3) ~ . - Sepal.Length, data = iris,          ## STRUCTURE
 #'                   rounding = 3, condense.binary.factors = FALSE,                 ## OPTIONS
-#'                   drop.x = TRUE, drop.y = TRUE, margin = 2,                      ## OPTIONS
+#'                   drop.x = TRUE, drop.y = TRUE, margin = 2:1,                    ## OPTIONS
 #'                   test = "both",                                                 ## TESTS
 #'                   fit.model = list(simple = ~ .,                                 ## FIT MODEL WITH NO COVARIATES
 #'                                    adj = ~ . + Sepal.Length),                    ## FIT ADJUSTED MODEL
 #'                   outcome = 2,                                                   ## LHS AS DEPENDENT VARIABLE (COLUMNS)
 #'                   FUN.model = list(simple = c("p-value" = "getPval"),            ## GET A P-VALUE FROM THE FIRST MODEL
 #'                                    adj = c("OR (95% CI)" = "verticalgetORCI",    ## GET ALL OR's FROM THE 2nd MODEL
-#'                                            "p-value" = "verticalgetPval")))      ## GET ALL P-VALUES FROM THE 2nd MODEL
+#'                                            "p-value" = "verticalgetPval")),      ## GET ALL P-VALUES FROM THE 2nd MODEL
+#'                   show.quantiles = c(0, 0.5, 1))                                 ## QUANTILES: probs ARGUMENT
+#'                                                                                  ## PASSED TO descr_var()
 #' bvt
 #' \dontrun{
 #' export(bvt)                                                                      ## OPEN bvt IN EXCEL
@@ -355,10 +381,11 @@ bivarTable.default <- function(X,
                                drop.x = getOption("drop.x"), 
                                drop.y = getOption("drop.y"),
                                test = c("none", "parametric", "non-parametric", "both"),
-                               fit.model = NULL,
                                outcome = getOption("outcome"),
+                               pvalues.model = getOption("pvalues.model"),
+                               fit.model = NULL,
                                FUN.model = NULL, ...){
-  
+  stopifnot(is.data.frame(X))
   nmy <- if(!is.null(y)) deparse(substitute(y)) else ""
   nmX <- names(X)
   taula <- NULL
@@ -368,21 +395,22 @@ bivarTable.default <- function(X,
     y <- y[[1]]
   }
   
-  for(i in 1:length(X)){
-    novataula <- bivarRow(x = X[i], 
-                          y = y, 
-                          data = data,
-                          margin = margin, 
-                          rounding = rounding, 
-                          test = test, 
-                          condense.binary.factors = condense.binary.factors, 
-                          drop.x = drop.x,
-                          drop.y = drop.y,
-                          fit.model = fit.model, 
-                          outcome = outcome, 
-                          FUN.model = FUN.model, ...)
-    taula <- rbind(taula, novataula)
-  }
+  taula_list <- lapply(seq_along(X), FUN = function(i){
+    bivarRow(x = X[i], 
+             y = y, 
+             data = data,
+             margin = margin, 
+             rounding = rounding, 
+             condense.binary.factors = condense.binary.factors, 
+             drop.x = drop.x,
+             drop.y = drop.y,
+             test = test, 
+             outcome = outcome, 
+             pvalues.model = pvalues.model, 
+             fit.model = fit.model, 
+             FUN.model = FUN.model, ...)
+  })
+  taula <- do.call(rbind, taula_list)
   
   out <- list()
   out$table <- taula
@@ -397,6 +425,7 @@ bivarTable.default <- function(X,
   out$X <- X
   out$y <- data.frame(y)
   if(!is.null(y)) names(out$y) <- nmy
+  out$pvalues.model <- pvalues.model
   out$other <- list(...)
   class(out) <- c("bivarTable", class(out))
   
@@ -414,8 +443,9 @@ bivarTable.formula <- function(X,
                                drop.x = getOption("drop.x"), 
                                drop.y = getOption("drop.y"),
                                test = c("none", "parametric", "non-parametric", "both"),
-                               fit.model = NULL,
                                outcome = getOption("outcome"),
+                               pvalues.model = getOption("pvalues.model"),
+                               fit.model = NULL,
                                FUN.model = NULL, ...){
   
   resp <- attr(terms(X, data = data), "response") == 1
@@ -440,8 +470,9 @@ bivarTable.formula <- function(X,
                      condense.binary.factors = condense.binary.factors, 
                      drop.x = drop.x,
                      drop.y = drop.y,
-                     fit.model = fit.model, 
                      outcome = outcome, 
+                     pvalues.model = pvalues.model,
+                     fit.model = fit.model, 
                      FUN.model = FUN.model, ...)
 }
 

@@ -336,7 +336,7 @@ verticalgetORCI <- function(model, vars = grep(pattern = "invar", x = names(mode
 }
 
 #' @export
-checkIf <- function(data, condition, select, drop = FALSE, showNA = FALSE, ...){
+check_if <- function(data, condition, select, drop = FALSE, showNA = FALSE, ...){
   rows <- ! eval(substitute(condition), data, parent.frame())
   cols <- if(missing(select)){
     names(data) %in% c(names(data)[1], all.vars(substitute(condition)))
@@ -353,15 +353,6 @@ checkIf <- function(data, condition, select, drop = FALSE, showNA = FALSE, ...){
     message("CONDITION DOES NOT HOLD TRUE FOR: \n")
     return(subdf)
   }
-}
-
-#' @export
-addNAlevel <- function(vector, toFactor = TRUE, after = length(factor(vector))){
-  if(is.character(vector) | is.factor(vector)){
-    vector2 <- ifelse(is.na(vector), "NA", as.character(vector))
-    if(toFactor) vector2 <- factor(vector2, levels = append(levels(vector), values = "NA", after = after))
-  }
-  return(vector2)
 }
 
 #' @export
@@ -431,12 +422,12 @@ toNumeric <- function(data, select){
 }
 
 #' @export
-descr <- function(x, ...) UseMethod("descr")
-descr.default <- function(x, y, ...){
+descr_var <- function(x, ...) UseMethod("descr_var")
+descr_var.default <- function(x, y, ...){
   message("Unhandled class for ", deparse(substitute(x)))
   return("-")
 }
-descr.numeric <- function(x, y = NULL, rounding = getOption("rounding"), show.quantiles = NULL){
+descr_var.numeric <- function(x, y = NULL, rounding = getOption("rounding"), show.quantiles = NULL, ...){
   
   mitjanes <- ifelse(is.na(mean(x, na.rm = T)), 
                      "-", 
@@ -450,9 +441,9 @@ descr.numeric <- function(x, y = NULL, rounding = getOption("rounding"), show.qu
                      "-", 
                      round(quantile(x, probs = show.quantiles, na.rm = TRUE), rounding))
     quants <- paste0(quants, collapse = " - ")
-    out <- inbra(mitjanes, desvsd, quants, between = "; ")
+    out <- inbra(mitjanes, desvsd, quants, between = "; ", rounding = rounding)
   } else {
-    out <- inbra(mitjanes, desvsd)
+    out <- inbra(mitjanes, desvsd, rounding = rounding)
   }
   if(!is.null(y)){
     mitjanes <- ifelse(is.na(tapply(x, y, mean, na.rm = TRUE)), 
@@ -466,19 +457,20 @@ descr.numeric <- function(x, y = NULL, rounding = getOption("rounding"), show.qu
                        "-", 
                        lapply(tapply(x, y, quantile, probs = show.quantiles, na.rm = TRUE), round, rounding)) 
       quants <- sapply(quants, paste0, collapse = " - ")
-      out <- inbra(mitjanes, desvsd, quants, between = "; ")
+      out <- inbra(mitjanes, desvsd, quants, between = "; ", rounding = rounding)
     } else {
-      out <- inbra(mitjanes, desvsd, between = "; ")
+      out <- inbra(mitjanes, desvsd, between = "; ", rounding = rounding)
     }
   }
-  t(out)
+  out <- t(out)
+  colnames(out) <- levels(y)
+  out
 }
-
-descr.factor <- function(x, y = NULL, rounding = getOption("rounding"), margin = 2){
+descr_var.factor <- function(x, y = NULL, rounding = getOption("rounding"), margin = 2, ...){
   
   freqs <- as.vector(table(x))
   percents <- as.vector(prop.table(table(x)) * 100)
-  out <- as.matrix(inbra(freqs, percents, add = "%"))
+  out <- as.matrix(inbra(freqs, percents, add = "%", rounding = rounding))
 
   if(!is.null(y)){
     freqs <- table(x, y)
@@ -492,20 +484,20 @@ descr.factor <- function(x, y = NULL, rounding = getOption("rounding"), margin =
       df <- data.frame(as.vector(freqs), as.vector(percents1), as.vector(percents2))
     }
     
-    out <- matrix(inbra(df, add = "%", between = ", "), nrow = n_row)
+    out <- matrix(inbra(df, add = "%", between = ", ", rounding = rounding), nrow = n_row)
+    colnames(out) <- levels(y)
   }
+  
+  rownames(out) <- levels(x)
   out
 }
 
+# alt_bind <- function(..., margin = 2, sequence = NULL){
+#   
+# }
 
-alt_bind <- function(..., margin = 2, sequence = NULL){
-  
-}
-
-
-
+# require("multcomp")
 # compareLevels <- function(model, linfct, ...){
-#   require("multcomp")
 #   groups <- model$model[[2]]
 #   comp <- combn(levels(groups), 2, FUN = paste0, collapse = ":")
 #   if(missing(linfct)){

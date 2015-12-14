@@ -24,7 +24,7 @@ The package statTools also includes an `export` method, that exports the created
 
 ## The structure
 
-`bivarTable` constructs a matrix with the results of comparing variables by groups. The levels of the grouping variable will be displayed in columns, and in the rows all the variables in which the differences will be assessed. An extra column called `Total` will be always displayed, with the overall description of the sample. All this structure is summarized with a formula (argument `X`), where the LHS indicates the variable displayed in the columns (i.e. grouping variable) and the RHS all the variables in the rows. To sum up:
+`bivarTable` constructs a matrix with the results of comparing variables by groups. The levels of the grouping variable will be displayed in columns, and in the rows all the variables in which the differences will be assessed. An extra column called `All` will be always displayed, with the overall description of the sample. All this structure is summarized with a formula (argument `X`), where the LHS indicates the variable displayed in the columns (i.e. grouping variable) and the RHS all the variables in the rows. To sum up:
 
 `Grouping Variable ~ Variable 1 + Variable 2 + ... + Variable n`
 
@@ -48,11 +48,12 @@ An unquoted matrix is printed (internally returns a list where the first argumen
 
 This is one of the most basic tables that can be generated with `bivartable`. Other arguments than can control the output produced by default:
 
-- To change the percentages for qualitative variables (rows to sum 100\% instead of columns) use `margin = 1` instead of the default `margin = 2`. It is passed to `prop.table`
+- To change the percentages for qualitative variables (rows to sum 100\% instead of columns) use `margin = 1` instead of the default `margin = 2`. It is passed to `prop.table`. If it is a vector 1:2 or 2:1, both percentages are calculated.
 - To display more decimal places, use `rounding`. By default only two decimals are printed: `rounding = 2`. This argument reads in fact the element `rounding` from options. 
 - By default, binary factors in the rows are displayed as one row (usually the second, except the first one has level "Yes", "1", or something similar) and giving the label of the row displayed in brackets. Set the argument `condense.binary.factors` to `FALSE` to display both levels (rows).
 - By default, the grouping variable is transformed to factor using `factor` function. This removes unused categories. To change that, use `drop.y = FALSE`.
 - The same is done for the rows when are factors. To change that set `drop.x` to `FALSE`. These agruments can change the number of rows and columns and must be used carefully because they can lead (and avoid) to  errors. 
+- show.quantiles is passed to function `descr_var()`. If `FALSE` no quantiles are calculated. If the quantiles are required, `show.quantiles` will be passed to function `quantile` as argument `probs`.
 
 Most of these arguments can be set by default throughout all the session via `options(argument = <value>)`. We will add some qualitative variables to the `iris` dataset to better illustrate the effect of some of these arguments:
 
@@ -63,8 +64,10 @@ iris2$Sepal.Total.CAT3 <- cut(iris$Sepal.Width + iris$Sepal.Length, breaks = 3)
 iris2$Sepal.Total.CAT5 <- cut(iris$Sepal.Width + iris$Sepal.Length, breaks = 5)
 
 bivarTable(Species ~ . + log(Sepal.Length), iris2, 
-           rounding = 3, margin = 2, condense.binary.factors = TRUE)
+           rounding = 1, margin = 2, condense.binary.factors = TRUE)
 bivarTable(Species ~ . + log(Sepal.Length), iris2, margin = 1, condense.binary.factors = FALSE)
+bivarTable(Species ~ . + log(Sepal.Length), iris2, margin = 1, condense.binary.factors = FALSE, 
+           show.quantiles = c(0, 0.5, 1))
 ```
 
 Notice that the formula allows transformations of the variables like logarithm in this case.
@@ -110,9 +113,15 @@ bivarTable(Species ~ . - Petal.Length, iris2,
            fit.model = list(adjusted = ~ . + Petal.Length,
                             interaction = ~ . * Petal.Length),
            output = 2)
+bivarTable(Species ~ . - Petal.Length, iris2,
+           test = "non-par", 
+           fit.model = list(adjusted = ~ . + Petal.Length,
+                            interaction = ~ . * Petal.Length),
+           output = 2, pvalue.model = FALSE)
 ```
-
 In this example, another model with the interaction is fitted, so two new columns are added. However, the p-value from the variable in the row is the only one that is provided by default. If you want to print the p-value from the interaction you need to use the `FUN.model` argument which is explained in the next section. 
+
+Note that in the second call, the argument `pvalue.model` controls whether to show or not the `drop1` p-values from every model.
 
 ## Adding model outputs
 
@@ -170,5 +179,6 @@ bvt <- bivarTable(Species ~ . - Petal.Length, iris2,
                             interaction = ~ . * Petal.Length),
            output = 2)
 export(bvt, type = "xlsx")
+export(bvt, file = "myBivarTable.xlsx")
 ```
 

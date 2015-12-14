@@ -12,4 +12,5 @@
   options(drop.y = TRUE)
   options(margin = 2)
   options(outcome = 1)
+  options(pvalues.model = TRUE)
 }

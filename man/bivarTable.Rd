@@ -13,20 +13,24 @@ bivarTable(X, ...)
   condense.binary.factors = getOption("condense.binary.factors"),
   drop.x = getOption("drop.x"), drop.y = getOption("drop.y"),
   test = c("none", "parametric", "non-parametric", "both"),
-  fit.model = NULL, outcome = getOption("outcome"), FUN.model = NULL, ...)
+  outcome = getOption("outcome"),
+  pvalues.model = getOption("pvalues.model"), fit.model = NULL,
+  FUN.model = NULL, ...)
 
 \method{bivarTable}{formula}(X, data = NULL, margin = getOption("margin"),
   rounding = getOption("rounding"),
   condense.binary.factors = getOption("condense.binary.factors"),
   drop.x = getOption("drop.x"), drop.y = getOption("drop.y"),
   test = c("none", "parametric", "non-parametric", "both"),
-  fit.model = NULL, outcome = getOption("outcome"), FUN.model = NULL, ...)
+  outcome = getOption("outcome"),
+  pvalues.model = getOption("pvalues.model"), fit.model = NULL,
+  FUN.model = NULL, ...)
 }
 \arguments{
 \item{X}{A data frame with variables in the rows (for .default) or a formula with additive terms (. and - are allowed too) and with 0 or 1 variable in the LHS.
 LHS of the formula defines the grouping variable, and RHS where to assess differences (for .formula).}
 
-\item{...}{Extra arguments for the functions in \code{FUN.model}. To change arguments from the functions, add a list argument named 
+\item{...}{Extra arguments for the functions in \code{FUN.model} or the descriptive functions \code{descr_var()}. To change arguments from the functions, add a list argument named 
 as the model that the function is applied to, whose elements will be the lists with arguments to modify (passed to do.call), and the 
 name of each list of arguments the function those arguments belong to (See Examples).}
 
@@ -48,17 +52,19 @@ if 2, column percentages sum 100\%. See \code{margin} from \code{prop.table}.}
 \item{test}{One of "both", "parametric", "non-parametric" or "none". Defines the type of tests to perform in all variables in RHS.
 See Details section.}
 
-\item{fit.model}{A NAMED list with formulas for fitting models to each row. These formulas are passed to \code{update.formula}
-so \code{.} here refers to each RHS or LHS variable, depending on argument \code{output}. See Details.}
-
 \item{outcome}{If 1, RHS are understood as the dependent variables when fitting models. 
 If 2, LHS variable is understood as the dependent variable in each model fitted.}
+
+\item{fit.model}{A NAMED list with formulas for fitting models to each row. These formulas are passed to \code{update.formula}
+so \code{.} here refers to each RHS or LHS variable, depending on argument \code{output}. See Details.}
 
 \item{FUN.model}{A NAMED list. Each element has to be named like one of the elements in \code{fit.model}.
 Each element in FUN.model will be a character vector with the names of functions to be executed in each model to return more particular outputs.
 If the vector is named, these are used as column names in the final table (See Examples). The first argument of the function
 has to be the model fitted. Other arguments can be changed in \code{...}. Examples of functions used for this are 
 nagelkerke(), adjNagelkerke(), getPval(), getBetaSd(), getORCI(), verticalgetPval(), verticalgetBetaSd(), verticalgetORCI(), GoF().}
+
+\item{pvalue.model}{Logical. If TRUE a p-value from the drop1 methods are provided for each model fitted.}
 }
 \value{
 A list with class bivarTable, where the first argument is the table generated (a matrix) and the other arguments
@@ -119,14 +125,16 @@ bvt <- bivarTable(X = Species ~ . + I(Sepal.Width>3) - Sepal.Length,
 bvt
 bvt <- bivarTable(X = I(Sepal.Width>3) ~ . - Sepal.Length, data = iris,          ## STRUCTURE
                   rounding = 3, condense.binary.factors = FALSE,                 ## OPTIONS
-                  drop.x = TRUE, drop.y = TRUE, margin = 2,                      ## OPTIONS
+                  drop.x = TRUE, drop.y = TRUE, margin = 2:1,                    ## OPTIONS
                   test = "both",                                                 ## TESTS
                   fit.model = list(simple = ~ .,                                 ## FIT MODEL WITH NO COVARIATES
                                    adj = ~ . + Sepal.Length),                    ## FIT ADJUSTED MODEL
                   outcome = 2,                                                   ## LHS AS DEPENDENT VARIABLE (COLUMNS)
                   FUN.model = list(simple = c("p-value" = "getPval"),            ## GET A P-VALUE FROM THE FIRST MODEL
                                    adj = c("OR (95\% CI)" = "verticalgetORCI",    ## GET ALL OR's FROM THE 2nd MODEL
-                                           "p-value" = "verticalgetPval")))      ## GET ALL P-VALUES FROM THE 2nd MODEL
+                                           "p-value" = "verticalgetPval")),      ## GET ALL P-VALUES FROM THE 2nd MODEL
+                  show.quantiles = c(0, 0.5, 1))                                 ## QUANTILES: probs ARGUMENT
+                                                                                 ## PASSED TO descr_var()
 bvt
 \dontrun{
 export(bvt)                                                                      ## OPEN bvt IN EXCEL

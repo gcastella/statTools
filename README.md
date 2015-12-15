@@ -9,6 +9,8 @@ To install the package use `install_github()` from `devtools` package:
 `if(! "devtools" %in% .packages(all.available = T)) install.packages("devtools")`
 `devtools::install_github("gcastella/statTools")`
 
+The package can be then attached with `library(statTools)`.
+
 ## To do
 
 - Write help files for all exported functions

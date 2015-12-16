@@ -6,6 +6,6 @@
 \alias{statTools-package}
 \title{statTools}
 \description{
-Useful functions for performing simple statistical analyses, particularly some plots and predefined tables with results.
+Useful functions for R and data analysis, particularly for comparing 2 or more groups.
 }
 

@@ -492,9 +492,47 @@ descr_var.factor <- function(x, y = NULL, rounding = getOption("rounding"), marg
   out
 }
 
-# alt_bind <- function(..., margin = 2, sequence = NULL){
-#   
-# }
+#' @export
+alt_bind <- function(..., alternate = 2, sequence){
+  dots <- list(...)
+  if(! do.call(all, lapply(dots, is.matrix))) stop("All arguments in ... must be matrices")
+  if(missing(sequence)) sequence <- rep(1, length(dots))
+  if(length(sequence) != length(dots)) stop("sequence and ... must have same length")
+  
+  if(alternate == 2){
+    if(1 != sum(! duplicated(sapply(dots, nrow)))) stop("Rows do not match.")
+    if(1 != sum(! duplicated(mapply(SIMPLIFY = FALSE, FUN = function(x, y) ncol(x)/y, dots, sequence)))) stop("Rows do not match using this sequence.")
+    
+    dim_names <- dimnames(dots[[1]])
+    args_list <- do.call(c, mapply(SIMPLIFY = FALSE, FUN = function(x, y){
+      if(x > 1){
+        lapply(c(1:(x - 1), 0), function(k){
+          y[, 1:ncol(y) %% x == k, drop = FALSE]
+        })
+      } else if(x == 1){
+        list(y)
+      } else stop("Invalid sequence.")
+    }, sequence, dots))
+    
+    pre_out <- do.call(rbind, args = args_list)
+    out <- matrix(pre_out, nrow = nrow(dots[[1]]))
+    if(!is.null(dim_names)){
+      rownames(out) <- rownames(dots[[1]])
+      colnames(out) <- as.vector(do.call(alt_bind, 
+                                         c(lapply(lapply(dots, colnames), t), 
+                                           list(alternate = alternate, 
+                                                sequence = sequence))))
+    }
+    return(out)
+  } else if(alternate == 1){
+    if(1 != sum(! duplicated(sapply(dots, ncol)))) stop("Columns do not match.")
+    if(1 != sum(! duplicated(mapply(SIMPLIFY = FALSE, FUN = function(x, y) nrow(x)/y, dots, sequence)))) stop("Rows do not match using this sequence.")
+    
+    return(t(do.call(alt_bind, c(lapply(dots, t), list(alternate = 2, sequence = sequence)))))
+  } else {
+    stop("alternate argument must be either 1 or 2 for alternating rows or columns respectively.")
+  }
+}
 
 # require("multcomp")
 # compareLevels <- function(model, linfct, ...){

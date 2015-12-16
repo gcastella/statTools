@@ -493,7 +493,10 @@ descr_var.factor <- function(x, y = NULL, rounding = getOption("rounding"), marg
 }
 
 #' @export
-alt_bind <- function(..., alternate = 2, sequence){
+alt_bind <- function(x, ...) UseMethod("alt_bind")
+
+#' @export
+alt_bind.default <- function(..., alternate = 2, sequence){
   dots <- list(...)
   if(! do.call(all, lapply(dots, is.matrix))) stop("All arguments in ... must be matrices")
   if(missing(sequence)) sequence <- rep(1, length(dots))
@@ -533,6 +536,23 @@ alt_bind <- function(..., alternate = 2, sequence){
     stop("alternate argument must be either 1 or 2 for alternating rows or columns respectively.")
   }
 }
+
+#' @export
+alt_bind.bivarTable <- function(..., sequence, alternate = 1){
+  dots <- list(...)
+  names_dots <- names(dots)
+  if(missing(sequence)) sequence <- rep(1, length(dots))
+  taula <- do.call(alt_bind, c(lapply(dots, getElement, name = "table"), list(sequence = sequence, alternate = alternate)))
+  if(!is.null(names_dots)){
+    rownames(taula) <- paste(rownames(taula), rep(rep(names_dots, times = sequence), length.out = nrow(taula)), sep = "_")
+  }
+  
+  out <- dots[[1]]
+  out$table <- taula
+  class(out) <- c("bivarTable", class(out))
+  return(out)
+}
+
 
 # require("multcomp")
 # compareLevels <- function(model, linfct, ...){

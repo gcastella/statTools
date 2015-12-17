@@ -232,7 +232,6 @@ GoF <- function(model){
   return(pval.gf)
 }
 
-
 #' Extracting P-values, Coefficients or OR (95\% CI) from a lm or glm object
 #' 
 #' Functions for fancy printing P-values, Coefficients or OR (95\% CI) from glm object. Prepared for \code{\link{bivarTable}} FUN.model.
@@ -494,8 +493,6 @@ descr_var.factor <- function(x, y = NULL, rounding = getOption("rounding"), marg
 
 #' @export
 alt_bind <- function(x, ...) UseMethod("alt_bind")
-
-#' @export
 alt_bind.default <- function(..., alternate = 2, sequence){
   dots <- list(...)
   if(! do.call(all, lapply(dots, is.matrix))) stop("All arguments in ... must be matrices")
@@ -519,12 +516,14 @@ alt_bind.default <- function(..., alternate = 2, sequence){
     
     pre_out <- do.call(rbind, args = args_list)
     out <- matrix(pre_out, nrow = nrow(dots[[1]]))
-    if(!is.null(dim_names)){
-      rownames(out) <- rownames(dots[[1]])
-      colnames(out) <- as.vector(do.call(alt_bind, 
+    if(length(dim_names) > 1){
+      if(!is.null(dim_names[[1]])) rownames(out) <- rownames(dots[[1]])
+      if(!any(sapply(lapply(dots, colnames), is.null))){
+        colnames(out) <- as.vector(do.call(alt_bind, 
                                          c(lapply(lapply(dots, colnames), t), 
                                            list(alternate = alternate, 
                                                 sequence = sequence))))
+      }
     }
     return(out)
   } else if(alternate == 1){
@@ -536,19 +535,26 @@ alt_bind.default <- function(..., alternate = 2, sequence){
     stop("alternate argument must be either 1 or 2 for alternating rows or columns respectively.")
   }
 }
-
-#' @export
-alt_bind.bivarTable <- function(..., sequence, alternate = 1){
+alt_bind.bivarTable <- function(..., sequence, label.first.row = FALSE){
   dots <- list(...)
   names_dots <- names(dots)
   if(missing(sequence)) sequence <- rep(1, length(dots))
-  taula <- do.call(alt_bind, c(lapply(dots, getElement, name = "table"), list(sequence = sequence, alternate = alternate)))
+  taula <- do.call(alt_bind, c(lapply(dots, getElement, name = "table"), list(sequence = sequence, alternate = 1)))
+  names_taula <- rownames(taula)
   if(!is.null(names_dots)){
-    rownames(taula) <- paste(rownames(taula), rep(rep(names_dots, times = sequence), length.out = nrow(taula)), sep = "_")
+    rownames(taula) <- rep(rep(names_dots, times = sequence), length.out = nrow(taula))
+  }
+  if(!label.first.row){
+    row_labels <- dots[[1]]$table
+    row_labels[TRUE, TRUE] <- ""
+    taula_nova <- alt_bind(row_labels, taula, sequence = c(1, length(dots)), alternate = 1)
+  } else {
+    taula_nova <- taula
+    rownames(taula_nova)[1:nrow(taula_nova) %% length(dots) == 1] <- rownames(dots[[1]]$table)
   }
   
   out <- dots[[1]]
-  out$table <- taula
+  out$table <- taula_nova
   class(out) <- c("bivarTable", class(out))
   return(out)
 }

@@ -1,0 +1,1 @@
+context("Tests for bivarTable")

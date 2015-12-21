@@ -493,6 +493,8 @@ descr_var.factor <- function(x, y = NULL, rounding = getOption("rounding"), marg
 
 #' @export
 alt_bind <- function(x, ...) UseMethod("alt_bind")
+
+#' @export
 alt_bind.default <- function(..., alternate = 2, sequence){
   dots <- list(...)
   if(! do.call(all, lapply(dots, is.matrix))) stop("All arguments in ... must be matrices")
@@ -535,6 +537,8 @@ alt_bind.default <- function(..., alternate = 2, sequence){
     stop("alternate argument must be either 1 or 2 for alternating rows or columns respectively.")
   }
 }
+
+#' @export
 alt_bind.bivarTable <- function(..., sequence, label.first.row = FALSE){
   dots <- list(...)
   names_dots <- names(dots)

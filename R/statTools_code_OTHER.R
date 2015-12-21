@@ -496,7 +496,9 @@ alt_bind <- function(x, ...) UseMethod("alt_bind")
 
 #' @export
 alt_bind.default <- function(..., alternate = 2, sequence){
-  dots <- list(...)
+  dots <- lapply(list(...), FUN = function(x){
+    if(is.data.frame(x)) return(as.matrix(x)) else return(x)
+  }) 
   if(! do.call(all, lapply(dots, is.matrix))) stop("All arguments in ... must be matrices")
   if(missing(sequence)) sequence <- rep(1, length(dots))
   if(length(sequence) != length(dots)) stop("sequence and ... must have same length")
@@ -564,18 +566,27 @@ alt_bind.bivarTable <- function(..., sequence, label.first.row = FALSE){
 }
 
 
-# require("multcomp")
-# compareLevels <- function(model, linfct, ...){
+# library("multcomp")
+# compareLevels <- function(model, linfct, extra.coef, ...){
 #   groups <- model$model[[2]]
 #   comp <- combn(levels(groups), 2, FUN = paste0, collapse = ":")
 #   if(missing(linfct)){
-#     compMAT <- t(combn(seq_along(levels(groups)), 2, FUN = function(x){
-#       vect <- numeric(length(levels(groups)))
+#     linfct <- t(combn(seq_along(levels(groups)), 2, FUN = function(x){
+#       vect <- numeric(nlevels(groups))
 #       vect[x] <- c(1, -1)
 #       vect
 #     }))
-#     rownames(compMAT) <- comp
-#     colnames(compMAT) <- levels(groups)
+#     rownames(linfct) <- comp
+#     colnames(linfct) <- levels(groups)
+#     if(length(model$coef) > nlevels(groups)){
+#       if(missing(extra.coef)){
+#         linfct <- cbind(linfct, do.call(rbind, rep(list(rep(0, length(model$coef) - nlevels(groups))), nrow(linfct))))
+#       } else {
+#         linfct <- cbind(linfct, do.call(rbind, rep(list(extra.coef), nrow(linfct))))
+#       }
+#     }
 #   }
-#   glht(model, linfct = compMAT)
+#   out <- do.call(getOption("p.value.rounding")[[1]], c(list(summary(glht(model, linfct = linfct, ...))$test$pvalues), getOption("p.value.rounding")[-1]))
+#   names(out) <- rownames(linfct)
+#   return(out)
 # }

@@ -47,33 +47,32 @@ bivarRow.factor <- function(x, y = NULL, data = NULL,
     output$bygroup_desc <- bygroup_desc
     
     test <- match.arg(test)
-    nonparam <- getOption("non.parametric.tests")
-    param <- getOption("parametric.tests")
-    test.pvals <- tryCatch(
-      switch(test, 
-        "non-parametric" = c("non-parametric" = do.call(nonparam$factor[[1]], c(list(table(x, y)), nonparam$factor[-1]))$p.value),
-        "parametric"     = c("parametric p-value" = do.call(param$factor[[1]], c(list(table(x, y)), param$factor[-1]))$p.value),
-        "both"           = c("non-parametric p-value" = do.call(nonparam$factor[[1]], c(list(table(x, y)), nonparam$factor[-1]))$p.value, 
-                            "parametric p-value" = do.call(param$factor[[1]], c(list(table(x, y)), param$factor[-1]))$p.value),
-        "none"           = NA
-      ), 
-      error = function(e){
-        warning(paste0("Error for variable ", xname, ": ", as.character(e)))
-        if(test == "both"){
-          return(c(NA, NA))
-        } else {
-          return(NA)
-        }
-      }
-    )
-    
     pround <- getOption("p.value.rounding")
-    test.pvals <- do.call(pround[[1]], c(list(test.pvals), pround[-1]))
-    test.pvalsmat <- matrix(rep("", times = length(test.pvals) * nrow(output[[1]])), ncol = length(test.pvals), nrow = nrow(output[[1]]))
-    test.pvalsmat[1,] <- test.pvals
-    colnames(test.pvalsmat) <- names(test.pvals)
-    if(test == "none") test.pvalsmat <- NULL
-    output$tests <- test.pvalsmat
+    if(test != "none"){
+      nonparam <- getOption("non.parametric.tests")
+      param <- getOption("parametric.tests")
+      test.pvals <- tryCatch(
+        switch(test, 
+          "non-parametric" = c("non-parametric" = do.call(nonparam$factor[[1]], c(list(table(x, y)), nonparam$factor[-1]))$p.value),
+          "parametric"     = c("parametric p-value" = do.call(param$factor[[1]], c(list(table(x, y)), param$factor[-1]))$p.value),
+          "both"           = c("non-parametric p-value" = do.call(nonparam$factor[[1]], c(list(table(x, y)), nonparam$factor[-1]))$p.value, 
+                               "parametric p-value" = do.call(param$factor[[1]], c(list(table(x, y)), param$factor[-1]))$p.value)
+        ), 
+        error = function(e){
+          warning(paste0("Error for variable ", xname, ": ", as.character(e)))
+          if(test == "both"){
+            return(c(NA, NA))
+          } else {
+            return(NA)
+          }
+        }
+      )
+      test.pvals <- do.call(pround[[1]], c(list(test.pvals), pround[-1]))
+      test.pvalsmat <- matrix("", ncol = length(test.pvals), nrow = nrow(output[[1]]))
+      test.pvalsmat[1,] <- test.pvals
+      colnames(test.pvalsmat) <- names(test.pvals)
+      output$tests <- test.pvalsmat
+    }  
     
     if(!is.null(fit.model)){ 
       pmod <- NULL
@@ -186,30 +185,31 @@ bivarRow.numeric <- function(x, y = NULL, data = NULL,
     output$bygroup_desc <- bygroup_desc
     
     test <- match.arg(test)
-    nonparam <- getOption("non.parametric.tests")
-    param <- getOption("parametric.tests")
-    
-    if(lly == 2) tt <- "numeric.binary" else tt <- "numeric.multi"
-    test.pvals <- tryCatch(
-      switch(test, 
-        "non-parametric" =  c("non-parametric" = do.call(nonparam[[tt]][[1]], c(list(x ~ y), nonparam[[tt]][-1]))$p.value),
-        "parametric"     =  c("parametric p-value" = do.call(param[[tt]][[1]], c(list(x ~ y), param[[tt]][-1]))$p.value),
-        "both"           =  c("non-parametric p-value" = do.call(nonparam[[tt]][[1]], c(list(x ~ y), nonparam[[tt]][-1]))$p.value, 
-                              "parametric p-value" = do.call(param[[tt]][[1]], c(list(x ~ y), param[[tt]][-1]))$p.value),
-        "none"           =  NA), 
-      error = function(e){
-        warning(paste0("Error for variable ", xname, ": ", as.character(e)))
-        if(test == "both"){
-         return(c(NA, NA))
-        } else {
-         return(NA)
-        }
-      }
-    )
     pround <- getOption("p.value.rounding")
-    test.pvals <- do.call(pround[[1]], c(list(test.pvals), pround[-1]))
-    if(test == "none") test.pvals <- NULL
-    output$tests <- t(test.pvals)
+    if(test != "none"){
+      nonparam <- getOption("non.parametric.tests")
+      param <- getOption("parametric.tests")
+      
+      if(lly == 2) tt <- "numeric.binary" else tt <- "numeric.multi"
+      test.pvals <- tryCatch(
+        switch(test, 
+          "non-parametric" =  c("non-parametric" = do.call(nonparam[[tt]][[1]], c(list(x ~ y), nonparam[[tt]][-1]))$p.value),
+          "parametric"     =  c("parametric p-value" = do.call(param[[tt]][[1]], c(list(x ~ y), param[[tt]][-1]))$p.value),
+          "both"           =  c("non-parametric p-value" = do.call(nonparam[[tt]][[1]], c(list(x ~ y), nonparam[[tt]][-1]))$p.value, 
+                                "parametric p-value" = do.call(param[[tt]][[1]], c(list(x ~ y), param[[tt]][-1]))$p.value)
+        ), 
+        error = function(e){
+          warning(paste0("Error for variable ", xname, ": ", as.character(e)))
+          if(test == "both"){
+           return(c(NA, NA))
+          } else {
+           return(NA)
+          }
+        }
+      )
+      test.pvals <- do.call(pround[[1]], c(list(test.pvals), pround[-1]))
+      output$tests <- t(test.pvals)
+    }
     
     if(!is.null(fit.model)){ 
       pmod <- NULL
@@ -359,7 +359,7 @@ bivarRow.numeric <- function(x, y = NULL, data = NULL,
 #'                   FUN.model = list(simple = c("p-value" = "getPval"),            ## GET A P-VALUE FROM THE FIRST MODEL
 #'                                    adj = c("OR (95% CI)" = "verticalgetORCI",    ## GET ALL OR's FROM THE 2nd MODEL
 #'                                            "p-value" = "verticalgetPval")),      ## GET ALL P-VALUES FROM THE 2nd MODEL
-#'                   show.quantiles = c(0, 0.5, 1))                                 ## QUANTILES: probs ARGUMENT
+#'                   show.quantiles = c(0, 1))                                      ## QUANTILES: probs ARGUMENT
 #'                                                                                  ## PASSED TO descr_var()
 #' bvt
 #' \dontrun{

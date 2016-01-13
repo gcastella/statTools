@@ -21,25 +21,36 @@ contour2 <- function(x, y = NULL, z = NULL, ...){
 }
 
 #' @export
-BARplot <- function(formula, data = NULL, factor.sd = 1, margin = 1, beside = TRUE, freq = FALSE, mean.par = NULL, sd.par = NULL, xlab = NULL, ylab = NULL, ...){
+BARplot <- function(formula, data = NULL, 
+                    factor.sd = 1, margin = 1, 
+                    beside = TRUE, freq = FALSE, 
+                    mean.par = NULL, sd.par = NULL, 
+                    xlab = NULL, ylab = NULL, ylim, ...){
   df <- model.frame(formula, data)
   x <- df[, 1]
   by <- df[, -1]
   sd.arrows <- NULL
   
   if(!is.factor(x)){
-    mean.bars <- do.call(tapply, c(list(x, by, mean), mean.par)) 
-    sd.arrows <- mean.bars + factor.sd*do.call(tapply, c(list(x, by, sd), sd.par)) 
+    mean.bars <- do.call(tapply, c(list(x, by, mean), mean.par))
+    sds <- do.call(tapply, c(list(x, by, sd), sd.par))
+    sd.arrows <- mean.bars + factor.sd * apply(sds, 1:length(dim(sds)), function(x) ifelse(is.na(x), 0, x))
   } else {
-    mean.bars <- table(x, by)
-    if(!freq) mean.bars <- prop.table(mean.bars, margin)*100
+    mean.bars <- table(df)
+    if(!freq) mean.bars <- prop.table(mean.bars, margin) * 100
+    sd.arrows <- mean.bars
   } 
   
-  if(is.null(xlab)) xlab <- deparse(substitute(by))
-  if(is.null(ylab)) ylab <- deparse(substitute(x))
-  a <- barplot(height = mean.bars, xlab = xlab, ylab = ylab, beside = beside, ...)
+  if(is.null(xlab)) xlab <- paste0(names(df)[-1], collapse = " ")
+  if(is.null(ylab)) ylab <- names(df)[1]
+  if(missing(ylim)) ylim <- c(0, max(sd.arrows, na.rm = TRUE))
+  a <- barplot(height = mean.bars, xlab = xlab, ylab = ylab, beside = beside, ylim = ylim, ...)
   if(!is.factor(x)){
-    arrows(x0 = a[, 1], y0 = mean.bars, x1 = a[, 1], y1 = sd.arrows, length = 0.1, angle = 90)
+    sapply(seq_along(a), function(x){
+      arrows(x0 = as.numeric(a)[x], y0 = as.numeric(mean.bars)[x], 
+             x1 = as.numeric(a)[x], y1 = as.numeric(sd.arrows)[x], 
+             length = 0.1, angle = 90)
+    })
   }
   return(invisible(list(mean = mean.bars, sd = sd.arrows, barplot = a)))
 }

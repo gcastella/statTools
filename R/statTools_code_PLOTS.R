@@ -90,3 +90,31 @@ HRplot <- function(formula, data, legend = TRUE, args.legend = list(x = "bottoml
   if(legend & (llcovar > 1)) do.call(what = "legend", args = c(args.legend, list(col = col, legend = levels(data[[covar]]))))
   if(test & (llcovar > 1)) do.call(what = "legend", args = c(args.test, list(legend = paste0("Log-Rank p-value = ", pvalue(pchisq(lower.tail = FALSE, df = 2, q = survdiff(formula, data = data)$chisq))))))
 }
+
+#' @export
+missPlot <- function(data, dendrogram = TRUE, percents = TRUE, reorderfun, ...){
+  NA_log <- is.na(data)
+  NA_mat <- apply(X = NA_log, MARGIN = 1:2, FUN = as.integer)
+  row_lab <- rownames(NA_mat) <- rep("", nrow(NA_mat))
+  if(percents){colnames(NA_mat) <- inbra(colnames(NA_mat), 100 * colMeans(NA_mat), add = "%")}
+  if(dendrogram){
+    if(missing(reorderfun)){
+      order_dend <-function(d, w){
+        n <- attributes(d)$members
+        bool <- n == ncol(data)
+        if(bool){
+          reorder(d, colSums(NA_mat), agglo.FUN = mean)
+        } else {
+          reorder(d, -rowSums(NA_mat), agglo.FUN = mean)
+        }
+      }
+      heatmap(NA_mat, scale = "none", labRow = row_lab, reorderfun = order_dend, ...)
+    } else {
+      heatmap(NA_mat, scale = "none", labRow = row_lab, ...)
+    }
+  } else {
+    NA_mat <- NA_mat[, order(colMeans(NA_mat), decreasing = TRUE)]
+    heatmap(NA_mat, scale = "none", labRow = rownames(NA_mat), ...)
+  }
+}  
+

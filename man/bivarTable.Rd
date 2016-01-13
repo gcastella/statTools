@@ -133,7 +133,7 @@ bvt <- bivarTable(X = I(Sepal.Width>3) ~ . - Sepal.Length, data = iris,         
                   FUN.model = list(simple = c("p-value" = "getPval"),            ## GET A P-VALUE FROM THE FIRST MODEL
                                    adj = c("OR (95\% CI)" = "verticalgetORCI",    ## GET ALL OR's FROM THE 2nd MODEL
                                            "p-value" = "verticalgetPval")),      ## GET ALL P-VALUES FROM THE 2nd MODEL
-                  show.quantiles = c(0, 0.5, 1))                                 ## QUANTILES: probs ARGUMENT
+                  show.quantiles = c(0, 1))                                      ## QUANTILES: probs ARGUMENT
                                                                                  ## PASSED TO descr_var()
 bvt
 \dontrun{

@@ -2,7 +2,7 @@ Package: statTools
 Title: Easier statistical analyses
 Version: 1.0
 Date: 2015-11-05
-Author: Gerard Castellà Canals
+Author: Gerard Castellà Canals <gcastella.91@gmail.com>, Ramon Boix Canudas <r.boix0807@gmail.com>, Joan Valls Marsal <jvalls@irblleida.cat>
 Maintainer: Gerard Castellà Canals <gcastella.91@gmail.com>
 BugReports: https://github.com/gcastella/statTools/issues
 Description: This R package contains some useful functions for performing simple statistical analyses, particularly some plots and predefined tables with results.

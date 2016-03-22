@@ -456,7 +456,7 @@ bivarTable.formula <- function(X,
   
   if(resp){
     y <- df[1]
-    X <- df[-1][attr(terms(X, data = data), "term.labels")]
+    X <- df[-1][gsub("`", "", attr(terms(X, data = data), "term.labels"))]
   } else {
     y <- NULL
     X <- df
